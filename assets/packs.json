@@ -1,0 +1,16 @@
+[
+  {
+    "manifest": "assets/defaults/default-tiles.json",
+    "optional": false
+  },
+  {
+    "manifest": "assets/kenney-scribble/pack.json",
+    "optional": true,
+    "collection": "kenney"
+  },
+  {
+    "manifest": "assets/kenney-tiny/pack.json",
+    "optional": true,
+    "collection": "kenney"
+  }
+]

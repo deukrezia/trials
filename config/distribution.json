@@ -1,0 +1,12 @@
+{
+  "web": {
+    "edition": "web",
+    "ad": { "enabled": true, "imageUrl": "", "targetUrl": "", "alt": "Sponsor" },
+    "gumroadUrl": ""
+  },
+  "desktop": {
+    "edition": "desktop",
+    "ad": { "enabled": false },
+    "gumroadUrl": ""
+  }
+}

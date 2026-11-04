@@ -1,0 +1,541 @@
+{
+  "id": "default-tiles",
+  "name": "Default Tiles",
+  "author": null,
+  "license": null,
+  "attributionRequired": false,
+  "tiles": [
+    {
+      "id": "default-tiles:0",
+      "name": "Water 01",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 0
+    },
+    {
+      "id": "default-tiles:1",
+      "name": "Water 02",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        16,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 1
+    },
+    {
+      "id": "default-tiles:2",
+      "name": "Water 03",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        32,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 2
+    },
+    {
+      "id": "default-tiles:8",
+      "name": "Water 04",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        0,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 3
+    },
+    {
+      "id": "default-tiles:9",
+      "name": "Water 05",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        16,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 4
+    },
+    {
+      "id": "default-tiles:10",
+      "name": "Water 06",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        32,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 5
+    },
+    {
+      "id": "default-tiles:16",
+      "name": "Water 07",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        0,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 6
+    },
+    {
+      "id": "default-tiles:17",
+      "name": "Water 08",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        16,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 7
+    },
+    {
+      "id": "default-tiles:18",
+      "name": "Water 09",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        32,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 8
+    },
+    {
+      "id": "default-tiles:5",
+      "name": "Ground 01",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        80,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 9
+    },
+    {
+      "id": "default-tiles:27",
+      "name": "Ground 02",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        48,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 10
+    },
+    {
+      "id": "default-tiles:4",
+      "name": "Ground 03",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        64,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 11
+    },
+    {
+      "id": "default-tiles:11",
+      "name": "Ground 04",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        48,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 12
+    },
+    {
+      "id": "default-tiles:19",
+      "name": "Ground 05",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        48,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 13
+    },
+    {
+      "id": "default-tiles:21",
+      "name": "Ground 06",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        80,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 14
+    },
+    {
+      "id": "default-tiles:23",
+      "name": "Ground 07",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        112,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 15
+    },
+    {
+      "id": "default-tiles:35",
+      "name": "Ground 08",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        48,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 16
+    },
+    {
+      "id": "default-tiles:36",
+      "name": "Ground 09",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        64,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 17
+    },
+    {
+      "id": "default-tiles:6",
+      "name": "Stone walls 01",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        96,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 18
+    },
+    {
+      "id": "default-tiles:7",
+      "name": "Stone walls 02",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        112,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 19
+    },
+    {
+      "id": "default-tiles:13",
+      "name": "Stone walls 03",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        80,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 20
+    },
+    {
+      "id": "default-tiles:14",
+      "name": "Stone walls 04",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        96,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 21
+    },
+    {
+      "id": "default-tiles:15",
+      "name": "Stone walls 05",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        112,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 22
+    },
+    {
+      "id": "default-tiles:22",
+      "name": "Stone walls 06",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        96,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 23
+    },
+    {
+      "id": "default-tiles:30",
+      "name": "Stone walls 07",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        96,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 24
+    },
+    {
+      "id": "default-tiles:20",
+      "name": "Edges 01",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        64,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 25
+    },
+    {
+      "id": "default-tiles:28",
+      "name": "Edges 02",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        64,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 26
+    },
+    {
+      "id": "default-tiles:37",
+      "name": "Edges 03",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        80,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 27
+    },
+    {
+      "id": "default-tiles:38",
+      "name": "Edges 04",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        96,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 28
+    },
+    {
+      "id": "default-tiles:3",
+      "name": "Stonework 01",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        48,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 29
+    },
+    {
+      "id": "default-tiles:25",
+      "name": "Stonework 02",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        16,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 30
+    },
+    {
+      "id": "default-tiles:26",
+      "name": "Furnishings 01",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        32,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 31
+    },
+    {
+      "id": "default-tiles:34",
+      "name": "Furnishings 02",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        32,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 32
+    },
+    {
+      "id": "default-tiles:24",
+      "name": "Furnishings 03",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        0,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 33
+    },
+    {
+      "id": "default-tiles:29",
+      "name": "Furnishings 04",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        80,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 34
+    },
+    {
+      "id": "default-tiles:33",
+      "name": "Furnishings 05",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        16,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 35
+    },
+    {
+      "id": "default-tiles:12",
+      "name": "Fire 01",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        64,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 36
+    },
+    {
+      "id": "default-tiles:32",
+      "name": "Fire 02",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles.png",
+      "rect": [
+        0,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "order": 37
+    }
+  ]
+}

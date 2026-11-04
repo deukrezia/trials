@@ -1,0 +1,1641 @@
+{
+  "id": "kenney-scribble",
+  "name": "Kenney · Scribble Dungeons",
+  "author": "Kenney",
+  "source": "https://kenney.nl/assets/scribble-dungeons",
+  "license": "CC0-1.0",
+  "tiles": [
+    {
+      "id": "kenney:Characters/green_character.png",
+      "name": "Green Character",
+      "category": "Characters",
+      "src": "assets/kenney-scribble/tiles/Characters/green_character.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Characters/green_hand.png",
+      "name": "Green Hand",
+      "category": "Characters",
+      "src": "assets/kenney-scribble/tiles/Characters/green_hand.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Characters/purple_character.png",
+      "name": "Purple Character",
+      "category": "Characters",
+      "src": "assets/kenney-scribble/tiles/Characters/purple_character.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Characters/purple_hand.png",
+      "name": "Purple Hand",
+      "category": "Characters",
+      "src": "assets/kenney-scribble/tiles/Characters/purple_hand.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Characters/red_character.png",
+      "name": "Red Character",
+      "category": "Characters",
+      "src": "assets/kenney-scribble/tiles/Characters/red_character.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Characters/red_hand.png",
+      "name": "Red Hand",
+      "category": "Characters",
+      "src": "assets/kenney-scribble/tiles/Characters/red_hand.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Characters/yellow_character.png",
+      "name": "Yellow Character",
+      "category": "Characters",
+      "src": "assets/kenney-scribble/tiles/Characters/yellow_character.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Characters/yellow_hand.png",
+      "name": "Yellow Hand",
+      "category": "Characters",
+      "src": "assets/kenney-scribble/tiles/Characters/yellow_hand.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/shield_curved.png",
+      "name": "Shield Curved",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/shield_curved.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/shield_straight.png",
+      "name": "Shield Straight",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/shield_straight.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/weapon_arrow.png",
+      "name": "Weapon Arrow",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/weapon_arrow.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/weapon_axe.png",
+      "name": "Weapon Axe",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/weapon_axe.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/weapon_axe_blades.png",
+      "name": "Weapon Axe Blades",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/weapon_axe_blades.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/weapon_axe_double.png",
+      "name": "Weapon Axe Double",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/weapon_axe_double.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/weapon_axe_large.png",
+      "name": "Weapon Axe Large",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/weapon_axe_large.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/weapon_bow.png",
+      "name": "Weapon Bow",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/weapon_bow.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/weapon_bow_arrow.png",
+      "name": "Weapon Bow Arrow",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/weapon_bow_arrow.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/weapon_dagger.png",
+      "name": "Weapon Dagger",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/weapon_dagger.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/weapon_hammer.png",
+      "name": "Weapon Hammer",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/weapon_hammer.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/weapon_longsword.png",
+      "name": "Weapon Longsword",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/weapon_longsword.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/weapon_pole.png",
+      "name": "Weapon Pole",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/weapon_pole.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/weapon_spear.png",
+      "name": "Weapon Spear",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/weapon_spear.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/weapon_staff.png",
+      "name": "Weapon Staff",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/weapon_staff.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:Items/weapon_sword.png",
+      "name": "Weapon Sword",
+      "category": "Items",
+      "src": "assets/kenney-scribble/tiles/Items/weapon_sword.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:arrow.png",
+      "name": "Arrow",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/arrow.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:arrow_circle.png",
+      "name": "Arrow Circle",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/arrow_circle.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:arrow_curve.png",
+      "name": "Arrow Curve",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/arrow_curve.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:arrow_head.png",
+      "name": "Arrow Head",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/arrow_head.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:barrel.png",
+      "name": "Barrel",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/barrel.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:barrels.png",
+      "name": "Barrels",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/barrels.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:barrels_stacked.png",
+      "name": "Barrels Stacked",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/barrels_stacked.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:bed.png",
+      "name": "Bed",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/bed.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:bed_luxurious.png",
+      "name": "Bed Luxurious",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/bed_luxurious.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:bridge.png",
+      "name": "Bridge",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/bridge.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:bridge_end.png",
+      "name": "Bridge End",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/bridge_end.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:campfire.png",
+      "name": "Campfire",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/campfire.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:carpet.png",
+      "name": "Carpet",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/carpet.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:cart.png",
+      "name": "Cart",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/cart.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:chair.png",
+      "name": "Chair",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/chair.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:chest.png",
+      "name": "Chest",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/chest.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:coffin.png",
+      "name": "Coffin",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/coffin.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:crate.png",
+      "name": "Crate",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/crate.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:crate_small.png",
+      "name": "Crate Small",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/crate_small.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:door_closed.png",
+      "name": "Door Closed",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/door_closed.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:door_open.png",
+      "name": "Door Open",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/door_open.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:doorway.png",
+      "name": "Doorway",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/doorway.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:dragon.png",
+      "name": "Dragon",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/dragon.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_arrow.png",
+      "name": "Floor Arrow",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_arrow.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_arrow_circle.png",
+      "name": "Floor Arrow Circle",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_arrow_circle.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_arrow_curve.png",
+      "name": "Floor Arrow Curve",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_arrow_curve.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_arrow_head.png",
+      "name": "Floor Arrow Head",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_arrow_head.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_barrel.png",
+      "name": "Floor Barrel",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_barrel.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_barrels.png",
+      "name": "Floor Barrels",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_barrels.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_barrels_stacked.png",
+      "name": "Floor Barrels Stacked",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_barrels_stacked.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_bed.png",
+      "name": "Floor Bed",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_bed.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_bed_luxurious.png",
+      "name": "Floor Bed Luxurious",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_bed_luxurious.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_campfire.png",
+      "name": "Floor Campfire",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_campfire.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_cart.png",
+      "name": "Floor Cart",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_cart.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_chair.png",
+      "name": "Floor Chair",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_chair.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_chest.png",
+      "name": "Floor Chest",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_chest.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_coffin.png",
+      "name": "Floor Coffin",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_coffin.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_crate_small.png",
+      "name": "Floor Crate Small",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_crate_small.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_door_closed.png",
+      "name": "Floor Door Closed",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_door_closed.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_door_open.png",
+      "name": "Floor Door Open",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_door_open.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_doorway.png",
+      "name": "Floor Doorway",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_doorway.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_dragon.png",
+      "name": "Floor Dragon",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_dragon.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_inner_diagonal.png",
+      "name": "Floor Inner Diagonal",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_inner_diagonal.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_inner_long_diagonal.png",
+      "name": "Floor Inner Long Diagonal",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_inner_long_diagonal.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_inner_long_round.png",
+      "name": "Floor Inner Long Round",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_inner_long_round.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_inner_round.png",
+      "name": "Floor Inner Round",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_inner_round.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_path.png",
+      "name": "Floor Path",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_path.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_path_crossing.png",
+      "name": "Floor Path Crossing",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_path_crossing.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_path_curve.png",
+      "name": "Floor Path Curve",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_path_curve.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_planks.png",
+      "name": "Floor Planks",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_planks.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_plants.png",
+      "name": "Floor Plants",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_plants.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_puddle.png",
+      "name": "Floor Puddle",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_puddle.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_table.png",
+      "name": "Floor Table",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_table.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_track.png",
+      "name": "Floor Track",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_track.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_track_cart.png",
+      "name": "Floor Track Cart",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_track_cart.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_track_crossing.png",
+      "name": "Floor Track Crossing",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_track_crossing.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_track_curve.png",
+      "name": "Floor Track Curve",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_track_curve.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_trap.png",
+      "name": "Floor Trap",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_trap.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_trapdoor_round.png",
+      "name": "Floor Trapdoor Round",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_trapdoor_round.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_trapdoor_square.png",
+      "name": "Floor Trapdoor Square",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_trapdoor_square.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_tree.png",
+      "name": "Floor Tree",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/floor_tree.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_wall.png",
+      "name": "Floor Wall",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/floor_wall.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_wall_corner.png",
+      "name": "Floor Wall Corner",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/floor_wall_corner.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_wall_curve.png",
+      "name": "Floor Wall Curve",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/floor_wall_curve.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_wall_damaged.png",
+      "name": "Floor Wall Damaged",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/floor_wall_damaged.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_wall_demolished.png",
+      "name": "Floor Wall Demolished",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/floor_wall_demolished.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_wall_diagonal.png",
+      "name": "Floor Wall Diagonal",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/floor_wall_diagonal.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_wall_edge.png",
+      "name": "Floor Wall Edge",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/floor_wall_edge.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_wall_half.png",
+      "name": "Floor Wall Half",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/floor_wall_half.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_wall_secret.png",
+      "name": "Floor Wall Secret",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/floor_wall_secret.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:floor_wall_trap.png",
+      "name": "Floor Wall Trap",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/floor_wall_trap.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:grass.png",
+      "name": "Grass",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/grass.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:inner_diagonal.png",
+      "name": "Inner Diagonal",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/inner_diagonal.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:inner_long_diagonal.png",
+      "name": "Inner Long Diagonal",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/inner_long_diagonal.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:inner_long_round.png",
+      "name": "Inner Long Round",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/inner_long_round.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:inner_round.png",
+      "name": "Inner Round",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/inner_round.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:path.png",
+      "name": "Path",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/path.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:path_crossing.png",
+      "name": "Path Crossing",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/path_crossing.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:path_curve.png",
+      "name": "Path Curve",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/path_curve.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:planks.png",
+      "name": "Planks",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/planks.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:plants.png",
+      "name": "Plants",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/plants.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:puddle.png",
+      "name": "Puddle",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/puddle.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:stairs_down.png",
+      "name": "Stairs Down",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/stairs_down.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:stairs_down_detail.png",
+      "name": "Stairs Down Detail",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/stairs_down_detail.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:table.png",
+      "name": "Table",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/table.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:tile.png",
+      "name": "Tile",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/tile.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:tiles.png",
+      "name": "Tiles",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/tiles.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:tiles_center.png",
+      "name": "Tiles Center",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/tiles_center.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:tiles_corner.png",
+      "name": "Tiles Corner",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/tiles_corner.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:tiles_cracked.png",
+      "name": "Tiles Cracked",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/tiles_cracked.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:tiles_decorative.png",
+      "name": "Tiles Decorative",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/tiles_decorative.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:track.png",
+      "name": "Track",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/track.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:track_cart.png",
+      "name": "Track Cart",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/track_cart.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:track_crossing.png",
+      "name": "Track Crossing",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/track_crossing.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:track_curve.png",
+      "name": "Track Curve",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/track_curve.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:trap.png",
+      "name": "Trap",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/trap.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:trap_door.png",
+      "name": "Trap Door",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/trap_door.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:trapdoor_round.png",
+      "name": "Trapdoor Round",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/trapdoor_round.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:trapdoor_square.png",
+      "name": "Trapdoor Square",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/trapdoor_square.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:tree.png",
+      "name": "Tree",
+      "category": "Props",
+      "src": "assets/kenney-scribble/tiles/tree.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:wall.png",
+      "name": "Wall",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/wall.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:wall_corner.png",
+      "name": "Wall Corner",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/wall_corner.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:wall_curve.png",
+      "name": "Wall Curve",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/wall_curve.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:wall_damaged.png",
+      "name": "Wall Damaged",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/wall_damaged.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:wall_demolished.png",
+      "name": "Wall Demolished",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/wall_demolished.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:wall_diagonal.png",
+      "name": "Wall Diagonal",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/wall_diagonal.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:wall_edge.png",
+      "name": "Wall Edge",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/wall_edge.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:wall_half.png",
+      "name": "Wall Half",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/wall_half.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:wall_secret.png",
+      "name": "Wall Secret",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/wall_secret.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:wall_trap.png",
+      "name": "Wall Trap",
+      "category": "Walls",
+      "src": "assets/kenney-scribble/tiles/wall_trap.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:water.png",
+      "name": "Water",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/water.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    },
+    {
+      "id": "kenney:wood.png",
+      "name": "Wood",
+      "category": "Floors",
+      "src": "assets/kenney-scribble/tiles/wood.png",
+      "rect": [
+        0,
+        0,
+        64,
+        64
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+[
+  {
+    "id": "default-tiles",
+    "name": "Default Tiles",
+    "file": "default-tiles.png",
+    "tileWidth": 16,
+    "tileHeight": 16,
+    "spacing": 0,
+    "margin": 0,
+    "skipEmpty": true,
+    "pixelArt": true,
+    "author": null,
+    "license": null,
+    "attributionRequired": false,
+    "groups": [
+      { "name": "Water", "category": "Floors", "tiles": [0, 1, 2, 8, 9, 10, 16, 17, 18] },
+      { "name": "Ground", "category": "Floors", "tiles": [5, 27, 4, 11, 19, 21, 23, 35, 36] },
+      { "name": "Stone walls", "category": "Walls", "tiles": [6, 7, 13, 14, 15, 22, 30] },
+      { "name": "Edges", "category": "Walls", "tiles": [20, 28, 37, 38] },
+      { "name": "Stonework", "category": "Props", "tiles": [3, 25] },
+      { "name": "Furnishings", "category": "Props", "tiles": [26, 34, 24, 29, 33] },
+      { "name": "Fire", "category": "Props", "tiles": [12, 32] }
+    ]
+  }
+]

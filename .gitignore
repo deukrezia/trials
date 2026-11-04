@@ -1,0 +1,11 @@
+node_modules/
+.test-output/
+*.log
+dist/
+out/
+.env
+.env.*
+!.env.example
+*.vttmap.json
+*.brushpack.json
+trials-library*.json

@@ -1,0 +1,51 @@
+import { enableKenney } from './tileset-ui.mjs';
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { chromium } from '@playwright/test';
+import { spawn } from 'node:child_process';
+import { readFile, mkdir } from 'node:fs/promises';
+import { once } from 'node:events';
+import { fileURLToPath } from 'node:url';
+import { createMap, placement } from '../src/model.js';
+
+test('multilayer UI, stacking/opacity, drag order, history, brush reset and toolbar size', { timeout: 120000 }, async () => {
+  const root = fileURLToPath(new URL('../', import.meta.url)), out = fileURLToPath(new URL('../.test-output/', import.meta.url)); await mkdir(out, { recursive: true });
+  const server = spawn(process.execPath, ['scripts/serve.mjs'], { cwd: root, env: { ...process.env, PORT: '4191' }, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }); let browser;
+  try {
+    await Promise.race([once(server.stdout, 'data'), once(server, 'exit').then(() => { throw Error('Test server exited'); })]);
+    browser = await chromium.launch({ headless: true, channel: 'msedge' }); const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true }), errors = [];
+    page.on('pageerror', error => errors.push(error.message)); await page.goto('http://127.0.0.1:4191'); await enableKenney(page);
+    const art = await page.evaluate(() => ['#ff0000', '#0000ff'].map(color => { const canvas = document.createElement('canvas'); canvas.width = canvas.height = 32; const context = canvas.getContext('2d'); context.fillStyle = color; context.fillRect(0, 0, 32, 32); return canvas.toDataURL(); }));
+    const fixture = createMap(4, 4, 'Layer checks'); fixture.packs = [{ id: 'custom-colors', name: 'Colors', images: art.map((data, i) => ({ id: `image-${i}`, data, width: 32, height: 32 })), tiles: art.map((_, i) => ({ id: `custom-colors:${i}`, name: i ? 'Blue' : 'Red', image: `image-${i}`, category: 'Custom', rect: [0, 0, 32, 32] })) }]; fixture.layers[0].cells[5] = placement('custom-colors:0'); fixture.layers[2].cells[5] = placement('custom-colors:1', 2, true);
+    async function openMap(map) { await page.locator('#map-file').setInputFiles({ name: 'layers.vttmap.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(map)) }); await page.waitForFunction(name => document.querySelector('#map-name').value === name, map.name); await page.locator('#fit-map').click(); }
+    async function saved() { const event = page.waitForEvent('download'); await page.locator('#save-map').click(); return JSON.parse(await readFile(await (await event).path(), 'utf8')); }
+    const row = id => page.locator(`.layer-row[data-layer-id="${id}"]`);
+    async function context(id) { await row(id).getByRole('button', { name: /^Select / }).click({ button: 'right' }); assert.equal(await page.locator('#layer-menu').isVisible(), true); }
+    async function opacity(id, value) { await context(id); await page.locator(`#layer-menu [data-opacity="${value}"]`).click(); }
+    async function cell(x, y) { const b = await page.locator('#map-canvas').boundingBox(); return { x: b.x + (b.width - 512) / 2 + (x + .5) * 128, y: b.y + 40 + (b.height - 170 - 512) / 2 + (y + .5) * 128 }; }
+    async function pixel() { const p = await cell(1, 1), b = await page.locator('#map-canvas').boundingBox(); await page.mouse.move(10, 100); await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))); return page.locator('#map-canvas').evaluate((canvas, pos) => [...canvas.getContext('2d').getImageData(pos.x, pos.y, 1, 1).data], { x: Math.round(p.x - b.x), y: Math.round(p.y - b.y) }); }
+    await openMap(fixture); await page.locator('#pack-select').selectOption('custom-colors'); await page.locator('#grid-toggle').click();
+    assert.deepEqual(await page.locator('.layer-select').allTextContents(), ['Objects', 'Walls', 'Ground']); assert.equal(await page.locator('.app-header #dimensions').count(), 0); assert.equal(await page.locator('.canvas-toolbar #dimensions').textContent(), '4 × 4'); assert.deepEqual(await pixel(), [0, 0, 255, 255]);
+    await opacity('layer-2', .5); assert.equal((await saved()).layers[2].opacity, .5); let rgba = await pixel(); assert.ok(Math.abs(rgba[0] - 128) <= 1 && Math.abs(rgba[2] - 128) <= 1); assert.equal(rgba[1], 0);
+    await page.locator('#export-map').click(); await page.locator('#export-grid').uncheck(); const exportEvent = page.waitForEvent('download'); await page.locator('#export-submit').click(); const png = await readFile(await (await exportEvent).path());
+    const exportPixel = await page.evaluate(async data => { const image = await createImageBitmap(new Blob([new Uint8Array(data)], { type: 'image/png' })), canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; const context = canvas.getContext('2d'); context.drawImage(image, 0, 0); return [...context.getImageData(96, 96, 1, 1).data]; }, [...png]); assert.deepEqual(exportPixel, rgba);
+    for (const value of [0, .25, .75, 1]) { await opacity('layer-2', value); assert.equal((await saved()).layers[2].opacity, value); } assert.deepEqual(await pixel(), [0, 0, 255, 255]);
+    // Choosing any palette tile, including the same tile, clears brush transforms.
+    await page.getByRole('button', { name: 'Paint', exact: true }).click(); await page.locator('#rotate-brush').click(); await page.locator('#flip-brush').click(); await page.locator('.tile-button[data-tile="custom-colors:1"]').click(); assert.equal(await page.locator('#rotation-label').textContent(), '0°'); assert.equal(await page.locator('#flip-brush').getAttribute('aria-pressed'), 'false');
+    await page.locator('#rotate-brush').click(); await page.locator('#flip-brush').click(); await page.locator('.tile-button[data-tile="custom-colors:1"]').click(); const paint = await cell(2, 2); await page.mouse.click(paint.x, paint.y); assert.deepEqual((await saved()).layers[2].cells[10], placement('custom-colors:1'));
+    await page.locator('#rotate-brush').click(); await page.locator('#flip-brush').click(); await page.getByRole('button', { name: 'Pick tile', exact: true }).click(); const pick = await cell(1, 1); await page.mouse.click(pick.x, pick.y); assert.equal(await page.locator('#rotation-label').textContent(), '0°'); assert.equal(await page.locator('#flip-brush').getAttribute('aria-pressed'), 'false');
+    await opacity('layer-2', .75); await context('layer-2'); await page.getByRole('menuitem', { name: 'Duplicate layer', exact: true }).click(); let map = await saved(), copy = map.layers[3]; assert.equal(copy.name, 'Objects copy'); assert.equal(copy.opacity, .75); assert.deepEqual(copy.cells, map.layers[2].cells); assert.equal(await page.locator('.layer-select').first().textContent(), 'Objects copy');
+    await context(copy.id); await page.getByRole('menuitem', { name: 'Delete layer', exact: true }).click(); assert.equal(await page.locator('#delete-layer-dialog').isVisible(), true); await page.locator('#delete-layer-dialog').getByRole('button', { name: 'Cancel', exact: true }).click(); assert.equal((await saved()).layers.length, 4);
+    await context(copy.id); await page.getByRole('menuitem', { name: 'Delete layer', exact: true }).click(); await page.locator('#delete-layer-form button[type=submit]').click(); assert.equal((await saved()).layers.length, 3); await page.locator('#undo').click(); assert.deepEqual((await saved()).layers[3], copy); await page.locator('#redo').click(); assert.equal((await saved()).layers.length, 3); await page.locator('#undo').click();
+    // Native drag/drop above a row raises a layer, and below lowers it.
+    await row('layer-0').dragTo(row(copy.id), { targetPosition: { x: 15, y: 3 } }); map = await saved(); assert.equal(map.layers.at(-1).id, 'layer-0'); assert.equal(await page.locator('.layer-select').first().textContent(), 'Ground'); assert.deepEqual(await pixel(), [255, 0, 0, 255]); await page.locator('#undo').click(); assert.equal((await saved()).layers.at(-1).id, copy.id);
+    const target = await row('layer-0').boundingBox(); await row(copy.id).dragTo(row('layer-0'), { targetPosition: { x: 15, y: target.height - 3 } }); assert.equal((await saved()).layers[0].id, copy.id); await page.locator('#undo').click();
+    while (await page.locator('.layer-row').count() < 12) await page.locator('#add-layer').click(); assert.equal(await page.locator('#add-layer').isDisabled(), true); map = await saved(); const topId = map.layers.at(-1).id;
+    await context(topId); assert.equal(await page.getByRole('menuitem', { name: 'Duplicate layer', exact: true }).isDisabled(), true); await page.screenshot({ path: out + '/layer-options.png' }); await page.keyboard.press('Escape');
+    await context(topId); await page.getByRole('menuitem', { name: 'Delete layer', exact: true }).click(); assert.equal(await page.locator('#delete-layer-dialog').isVisible(), false); assert.equal((await saved()).layers.length, 11); await page.locator('#undo').click(); assert.equal((await saved()).layers.length, 12);
+    map = await saved(); map.name = 'Twelve saved layers'; await openMap(map); assert.deepEqual((await saved()).layers, map.layers); await page.waitForFunction(() => document.querySelector('#save-state').textContent === 'Saved locally in this browser'); await page.reload(); await page.waitForFunction(() => document.querySelectorAll('.layer-row').length === 12); assert.deepEqual((await saved()).layers, map.layers);
+    const single = structuredClone(fixture); single.name = 'Single layer'; single.layers.length = 1; await openMap(single); await context('layer-0'); assert.equal(await page.getByRole('menuitem', { name: 'Delete layer', exact: true }).isDisabled(), true); await page.keyboard.press('Escape');
+    await page.setViewportSize({ width: 650, height: 760 }); assert.equal(await page.locator('.canvas-toolbar #dimensions').isVisible(), true); assert.equal(await page.locator('.canvas-toolbar').evaluate(node => node.scrollWidth <= node.clientWidth), true);
+    assert.deepEqual(errors, []); console.log('Layer order/opacity pixels, drag/drop, 12-layer limits, deletion, persistence and transform reset passed.');
+  } finally { if (browser) await browser.close(); server.kill(); }
+});
