@@ -5,8 +5,12 @@ export async function enableKenney(page) {
   // Core regression flows exercise the full paid editor; tier tests use the real web configuration.
   await page.route('**/assets/edition.json', route => route.fulfill({ json: { edition: 'desktop', ad: { enabled: false } } })); await page.reload();
   await page.waitForSelector('.tile-button'); await openTilesets(page);
-  if (await page.locator('#add-kenney').isVisible()) await page.locator('#add-kenney').click();
+  if (await page.locator('#add-kenney').isVisible()) await addKenney(page);
   await closeTilesets(page); await page.locator('#pack-select').selectOption('kenney-scribble');
+}
+export async function addKenney(page) {
+  await page.locator('#add-kenney').click(); await page.locator('#confirm-kenney').click();
+  await page.waitForFunction(() => !document.querySelector('#kenney-dialog').open);
 }
 
 export async function openTilesets(page) {

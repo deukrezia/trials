@@ -9,7 +9,7 @@ export const defaultSettings = () => ({ pixelsPerCell: 64, exportGrid: true, tra
 
 export function createMap(width = 40, height = 30, name = 'Untitled dungeon') {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 4 || height < 4 || width > 200 || height > 200 || width * height > MAX_CELLS) throw new Error('Use map dimensions from 4 to 200 cells.');
-  return { format: FORMAT, version: VERSION, name, width, height, seed: Date.now(), background: '#383d39', packs: [], packNames: {}, settings: defaultSettings(), layers: ['Ground', 'Walls', 'Objects'].map((name, i) => ({ id: `layer-${i}`, name, visible: true, locked: false, opacity: 1, cells: Array(width * height).fill(null) })) };
+  return { format: FORMAT, version: VERSION, name, width, height, seed: Date.now(), background: '#383d39', packs: [], packNames: {}, packDescriptions: {}, settings: defaultSettings(), layers: ['Ground', 'Walls', 'Objects'].map((name, i) => ({ id: `layer-${i}`, name, visible: true, locked: false, opacity: 1, cells: Array(width * height).fill(null) })) };
 }
 
 export function sameTile(a, b) { return a === b || (!!a && !!b && a.tile === b.tile && a.rotation === b.rotation && a.flip === b.flip); }
@@ -165,10 +165,11 @@ export function reorderLayer(history, id, index) {
 
 export function setLayerState(history, id, changes) {
   const layer = history.map.layers.find(layer => layer.id === id);
-  if (!layer || !Object.keys(changes).length || Object.keys(changes).some(key => !['opacity', 'visible', 'locked'].includes(key))) throw new Error('Invalid layer settings.');
+  if (!layer || !Object.keys(changes).length || Object.keys(changes).some(key => !['opacity', 'visible', 'locked', 'name'].includes(key))) throw new Error('Invalid layer settings.');
+  if ('name' in changes && (typeof changes.name !== 'string' || !changes.name.trim() || changes.name.trim().length > 100)) throw new Error('Use a layer name from 1 to 100 characters.');
   if ('opacity' in changes && ![0, .25, .5, .75, 1].includes(changes.opacity)) throw new Error('Use opacity in increments of 25%.');
   if (['visible', 'locked'].some(key => key in changes && typeof changes[key] !== 'boolean')) throw new Error('Invalid layer settings.');
-  return history.snapshot(() => Object.assign(layer, changes), { includeLayers: true });
+  return history.snapshot(() => Object.assign(layer, changes, 'name' in changes ? { name: changes.name.trim() } : {}), { includeLayers: true });
 }
 
 export function selectionInRect(map, layerIndex, x0, y0, x1, y1) {
@@ -319,6 +320,14 @@ export function validateMap(input, builtinIds = []) {
   if (input.packNames !== undefined) {
     if (!input.packNames || typeof input.packNames !== 'object' || Array.isArray(input.packNames) || Object.keys(input.packNames).length > 256) throw new Error('Invalid tileset names.');
     for (const [id, name] of Object.entries(input.packNames)) { if (!/^[a-zA-Z0-9:_-]{1,100}$/.test(id) || typeof name !== 'string' || !name.trim() || name.length > 100) throw new Error('Invalid tileset name.'); map.packNames[id] = name.trim(); }
+  }
+  map.packDescriptions = {};
+  if (input.packDescriptions !== undefined) {
+    if (!input.packDescriptions || typeof input.packDescriptions !== 'object' || Array.isArray(input.packDescriptions) || Object.keys(input.packDescriptions).length > 256) throw new Error('Invalid tileset descriptions.');
+    for (const [id, description] of Object.entries(input.packDescriptions)) {
+      if (!/^[a-zA-Z0-9:_-]{1,100}$/.test(id) || typeof description !== 'string' || description.length > 1000) throw new Error('Invalid tileset description.');
+      map.packDescriptions[id] = description.trim();
+    }
   }
   const ids = new Set(builtinIds), packIds = new Set();
   let embeddedSize = 0;

@@ -24,6 +24,7 @@ let customImages = new Map(), deletingPackId = null, importTargetId = null;
 let managingPackId = null, deletingImport = null;
 let draggedTileId = null, suppressTileClick = false;
 let activeLayerId = null, draggedLayerId = null, deletingLayerId = null;
+let renamingLayerId = null, describingPackId = null;
 let selectedLayerIds = new Set(), layerAnchorId = null;
 let sharedLibrary = emptyLibrary(), libraryWrite = Promise.resolve();
 let policy = editionPolicy('web');
@@ -117,7 +118,7 @@ async function installMap(candidate) {
   pendingMapMove = null; $('move-confirm-dialog').close();
   deletingPackId = null; $('delete-pack-dialog').close();
   managingPackId = null; deletingImport = null; $('tileset-manager-dialog').close(); $('delete-import-dialog').close();
-  layerMenu.close(); deletingLayerId = null; $('delete-layer-dialog').close();
+  layerMenu.close(); deletingLayerId = null; $('delete-layer-dialog').close(); renamingLayerId = null; $('rename-layer-dialog').close(); describingPackId = null; $('description-dialog').close(); $('kenney-dialog').close();
   const adopted = adoptProjectLibrary(sharedLibrary, candidate);
   candidate = validateMap(projectWithLibrary(adopted, candidate), builtinTiles.map(tile => tile.id));
   const prepared = await prepareAssets(candidate);
@@ -762,6 +763,9 @@ function renderTilesetManager() {
   if (activePack !== pack.id) { choosePack(pack.id, true); return; }
   const custom = availableCustomPacks().some(item => item.id === pack.id), removable = custom || pack.optional, name = map.packNames[pack.id] || pack.name.replace('Kenney · ', '');
   $('managed-tileset-name').textContent = name;
+  $('edit-tileset-description').textContent = map.packDescriptions[pack.id] || 'Add a description…';
+  $('edit-tileset-description').classList.toggle('empty-description', !map.packDescriptions[pack.id]);
+  $('edit-tileset-description').setAttribute('aria-label', map.packDescriptions[pack.id] ? 'Edit tileset description' : 'Add tileset description');
   $('managed-tileset-actions').hidden = !custom; $('managed-imports').hidden = !custom; $('managed-tileset-delete').hidden = !removable; $('default-tileset-note').hidden = custom;
   $('default-tileset-note').textContent = pack.optional ? 'Optional Kenney artwork. Removing this set keeps tiles already placed on your maps.' : 'Default artwork is included with the editor. Create a custom tileset to import your own tiles.';
   const atImportLimit = custom && importCount(pack) >= policy.maxImports;
@@ -830,10 +834,34 @@ $('pack-file').onchange = async event => {
 };
 $('save-pack').onclick = savePack;
 $('add-kenney').onclick = () => {
-  finishStroke(); const optional = builtinPacks.filter(pack => pack.collection === 'kenney');
-  publishLibrary({ ...sharedLibrary, enabledOptional: [...new Set([...sharedLibrary.enabledOptional, ...optional.map(pack => pack.id)])] });
+  finishStroke(); const enabled = new Set(sharedLibrary.enabledOptional);
+  for (const input of document.querySelectorAll('#kenney-form input[name=pack]')) {
+    input.disabled = enabled.has(input.value); input.checked = !input.disabled;
+    input.closest('label').classList.toggle('already-added', input.disabled);
+  }
+  updateKenneyButton(); $('kenney-dialog').showModal();
+};
+function updateKenneyButton() { $('confirm-kenney').disabled = !document.querySelector('#kenney-form input[name=pack]:checked:not(:disabled)'); }
+for (const input of document.querySelectorAll('#kenney-form input[name=pack]')) input.onchange = updateKenneyButton;
+$('kenney-form').onsubmit = event => {
+  event.preventDefault(); const ids = [...document.querySelectorAll('#kenney-form input[name=pack]:checked:not(:disabled)')].map(input => input.value);
+  const optional = builtinPacks.filter(pack => pack.collection === 'kenney' && ids.includes(pack.id)); if (!optional.length) return;
+  const next = { ...sharedLibrary, enabledOptional: [...new Set([...sharedLibrary.enabledOptional, ...optional.map(pack => pack.id)])] };
+  const descriptions = { 'kenney-scribble': 'Hand-drawn dungeon floors, walls, props and characters. 64×64 artwork.', 'kenney-tiny': 'Pixel dungeon terrain, furniture, items and characters. 16×16 artwork.' };
+  for (const pack of optional) if (!(pack.id in map.packDescriptions)) map.packDescriptions[pack.id] = descriptions[pack.id];
+  publishLibrary(libraryFromProject(next, map)); $('kenney-dialog').close();
   managingPackId = optional[0]?.id || activePack; activePack = managingPackId; rebuildLibrary(); choosePack(activePack, true); changed();
 };
+$('edit-tileset-description').onclick = () => {
+  describingPackId = managingPackId; $('pack-description').value = map.packDescriptions[describingPackId] || '';
+  $('description-dialog').showModal(); $('pack-description').focus();
+};
+$('description-form').onsubmit = event => {
+  event.preventDefault(); const id = describingPackId; if (!id) return;
+  map.packDescriptions[id] = $('pack-description').value.trim(); publishLibrary(libraryFromProject(sharedLibrary, map));
+  renderTilesetManager(); changed(); $('description-dialog').close();
+};
+$('description-dialog').addEventListener('close', () => { describingPackId = null; });
 $('backup-library').onclick = () => jsonDownload(sharedLibrary, 'trials-library.json');
 $('restore-library').onclick = () => $('library-file').click();
 $('library-file').onchange = async event => {
@@ -841,7 +869,7 @@ $('library-file').onchange = async event => {
     const file = event.target.files[0]; if (!file) return;
     if (file.size > 64 * 1024 * 1024) throw new Error('Choose a library backup smaller than 64 MB.');
     finishStroke(); const next = mergeLibraryBackup(sharedLibrary, JSON.parse(await file.text())), candidate = validateMap(projectWithLibrary(next, map), builtinTiles.map(tile => tile.id)), prepared = await prepareAssets(candidate);
-    history.snapshot(() => { map.packs = candidate.packs; map.layers = candidate.layers; map.packNames = candidate.packNames; }, { includePacks: true });
+    history.snapshot(() => { map.packs = candidate.packs; map.layers = candidate.layers; map.packNames = candidate.packNames; }, { includePacks: true }); map.packDescriptions = candidate.packDescriptions;
     publishLibrary(next); images = prepared.newImages; tiles = prepared.newTiles; rebuildLibrary(); gridChanged(); notify('Library imported. Tilesets are available in every project on this device.');
   } catch (error) { showError(error); } finally { event.target.value = ''; }
 };
@@ -908,6 +936,10 @@ window.addEventListener('beforeunload', event => { if (dirty && $('save-state').
 new ResizeObserver(resizeCanvas).observe(viewport);
 const layerMenu = createLayerMenu($('layer-menu'), (action, id, value) => {
   if (action === 'opacity') changeLayer(() => setLayerState(history, id, { opacity: value }));
+  else if (action === 'rename') {
+    const layer = map.layers.find(layer => layer.id === id); if (!layer || !canEditProject()) return;
+    renamingLayerId = id; $('layer-name').value = layer.name; $('rename-layer-dialog').showModal(); $('layer-name').focus(); $('layer-name').select();
+  }
   else if (action === 'duplicate') changeLayer(() => { activeLayerId = addLayer(history, id, policy.maxLayers); selectedLayerIds = new Set([activeLayerId]); layerAnchorId = activeLayerId; return true; });
   else if (action === 'delete') {
     const layer = map.layers.find(layer => layer.id === id), count = layer?.cells.filter(Boolean).length;
@@ -916,6 +948,11 @@ const layerMenu = createLayerMenu($('layer-menu'), (action, id, value) => {
     else { deletingLayerId = id; $('delete-layer-warning').textContent = `Delete “${layer.name}” and its ${count} ${count === 1 ? 'tile' : 'tiles'}? You can restore the layer with Undo.`; $('delete-layer-dialog').showModal(); }
   }
 });
+$('rename-layer-form').onsubmit = event => {
+  event.preventDefault(); const id = renamingLayerId, name = $('layer-name').value.trim(); if (!id || !name) return;
+  changeLayer(() => setLayerState(history, id, { name })); $('rename-layer-dialog').close();
+};
+$('rename-layer-dialog').addEventListener('close', () => { renamingLayerId = null; });
 $('add-layer').onclick = () => changeLayer(() => { activeLayerId = addLayer(history, null, policy.maxLayers); selectedLayerIds = new Set([activeLayerId]); layerAnchorId = activeLayerId; return true; });
 $('delete-layer-form').onsubmit = event => { event.preventDefault(); const id = deletingLayerId; deletingLayerId = null; $('delete-layer-dialog').close(); if (id) changeLayer(() => deleteLayer(history, id), true); };
 $('delete-layer-dialog').addEventListener('close', () => { deletingLayerId = null; });

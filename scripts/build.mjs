@@ -12,6 +12,11 @@ await rm(output, { recursive: true, force: true }); await mkdir(output, { recurs
 for (const item of ['index.html', 'styles.css', 'src', 'assets']) await cp(path.join(root, item), path.join(output, item), { recursive: true });
 const config = JSON.parse(await readFile(path.join(root, 'config/distribution.json'), 'utf8'))[edition];
 if (edition === 'desktop') config.ad = { enabled: false };
+if (edition === 'web' && config.ad?.enabled && config.ad.provider === 'adsense' && /^ca-pub-\d{16}$/.test(config.ad.publisherId || '')) {
+  const filename = path.join(output, 'index.html'), html = await readFile(filename, 'utf8');
+  const verification = `<meta name="google-adsense-account" content="${config.ad.publisherId}">\n  <script async data-trials-adsense src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${config.ad.publisherId}" crossorigin="anonymous"></script>\n`;
+  await writeFile(filename, html.replace('</head>', `  ${verification}</head>`));
+}
 await writeFile(path.join(output, 'assets/edition.json'), JSON.stringify(config, null, 2) + '\n');
 await writeFile(path.join(output, '.nojekyll'), '');
 console.log(`Ready: ${output}`);

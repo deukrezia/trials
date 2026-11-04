@@ -1,7 +1,7 @@
 import { createMap, validateMap, libraryPacks, libraryTiles, exportablePack } from './model.js';
 
 const clone = value => structuredClone(value);
-export const emptyLibrary = () => ({ format: 'vtt-tile-library', version: 1, packs: [], packNames: {}, enabledOptional: [], removedPacks: [], removedTiles: [], tileOrders: {} });
+export const emptyLibrary = () => ({ format: 'vtt-tile-library', version: 1, packs: [], packNames: {}, packDescriptions: {}, enabledOptional: [], removedPacks: [], removedTiles: [], tileOrders: {} });
 function sameVisual(pack, tile, source, original, cache) {
   if ((tile.pixelArt ?? true) !== (original.pixelArt ?? true) || tile.rect.some((value, i) => value !== original.rect[i])) return false;
   const key = JSON.stringify([pack.id, tile.image, original.image]);
@@ -11,8 +11,8 @@ function sameVisual(pack, tile, source, original, cache) {
 
 export function validateLibrary(value) {
   if (!value || value.format !== 'vtt-tile-library' || value.version !== 1) throw new Error('Choose a Map Maker tileset library backup.');
-  const state = emptyLibrary(), map = validateMap({ ...createMap(4, 4), packs: value.packs, packNames: value.packNames || {} });
-  state.packs = libraryPacks(map).map(exportablePack); state.packNames = map.packNames;
+  const state = emptyLibrary(), map = validateMap({ ...createMap(4, 4), packs: value.packs, packNames: value.packNames || {}, packDescriptions: value.packDescriptions || {} });
+  state.packs = libraryPacks(map).map(exportablePack); state.packNames = map.packNames; state.packDescriptions = map.packDescriptions;
   for (const key of ['enabledOptional', 'removedPacks', 'removedTiles']) {
     const values = value[key] || [];
     if (!Array.isArray(values) || values.length > 100000 || values.some(id => typeof id !== 'string' || !id || id.length > 500)) throw new Error('Invalid library preferences.');
@@ -47,6 +47,7 @@ export function adoptProjectLibrary(state, project) {
     }
   }
   next.packNames = { ...project.packNames, ...next.packNames };
+  next.packDescriptions = { ...project.packDescriptions, ...next.packDescriptions };
   // Rebuild metadata after filtering removed brushes from a portable project.
   for (const pack of next.packs) { const ids = new Set(pack.tiles.map(tile => tile.id)); pack.imports = (pack.imports || []).map(group => ({ ...group, tiles: group.tiles.filter(id => ids.has(id)) })).filter(group => group.tiles.length); }
   return validateLibrary(next);
@@ -74,6 +75,7 @@ export function projectWithLibrary(state, project) {
   }
   for (const pack of state.packs) if (!sourcePacks.has(pack.id)) merged.push(clone(pack));
   result.packs = merged; result.packNames = { ...project.packNames, ...state.packNames };
+  result.packDescriptions = { ...project.packDescriptions, ...state.packDescriptions };
   return result;
 }
 
@@ -82,6 +84,7 @@ export function libraryFromProject(previous, project) {
   next.removedPacks = [...new Set([...next.removedPacks, ...previous.packs.filter(pack => !packIds.has(pack.id)).map(pack => pack.id)])].filter(id => !packIds.has(id));
   next.removedTiles = [...new Set([...next.removedTiles, ...previous.packs.flatMap(pack => libraryTiles(pack).filter(tile => !tileIds.has(tile.id)).map(tile => tile.id))])].filter(id => !tileIds.has(id));
   next.packs = active; next.packNames = clone(project.packNames);
+  next.packDescriptions = clone(project.packDescriptions || {});
   return next;
 }
 
@@ -92,6 +95,7 @@ export function mergeLibraryBackup(current, backup) {
   const merged = adoptProjectLibrary(base, { packs: incoming.packs, packNames: incoming.packNames });
   merged.packNames = { ...current.packNames, ...incoming.packNames }; merged.enabledOptional = [...new Set([...current.enabledOptional, ...incoming.enabledOptional])];
   merged.tileOrders = { ...current.tileOrders, ...incoming.tileOrders };
+  merged.packDescriptions = { ...current.packDescriptions, ...incoming.packDescriptions };
   for (const pack of merged.packs) { const source = incoming.packs.find(item => item.id === pack.id); if (source) pack.name = source.name; }
   return validateLibrary(merged);
 }

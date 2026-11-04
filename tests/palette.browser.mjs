@@ -6,7 +6,7 @@ import { once } from 'node:events';
 import { readFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { createMap, placement } from '../src/model.js';
-import { openTilesets, closeTilesets } from './tileset-ui.mjs';
+import { openTilesets, closeTilesets, addKenney } from './tileset-ui.mjs';
 
 test('palette organization, contextual edition details and removable optional Kenney sets', { timeout: 120000 }, async () => {
   const root = fileURLToPath(new URL('../', import.meta.url));
@@ -33,14 +33,14 @@ test('palette organization, contextual edition details and removable optional Ke
     await openTilesets(page); assert.equal(await page.locator('#free-edition-rules').textContent(), 'Free edition'); await page.locator('#free-edition-rules').click();
     assert.equal(await page.locator('#edition-dialog').isVisible(), true); assert.deepEqual(await page.locator('.edition-comparison thead th').allTextContents(), ['', 'Free web', 'Desktop']); await page.locator('#edition-dialog').getByRole('button', { name: 'Close', exact: true }).click();
     const backupDownload = page.waitForEvent('download'); await page.locator('#backup-library').click(); const backup = JSON.parse(await readFile(await (await backupDownload).path(), 'utf8')); assert.deepEqual(backup.tileOrders['default-tiles'], expected);
-    await page.locator('#add-kenney').click(); await closeTilesets(page);
+    await addKenney(page); await closeTilesets(page);
     const map = createMap(4, 4, 'Retained Kenney'); map.layers[0].cells[5] = placement('kenney:tiles.png'); map.layers[2].cells[10] = placement('tiny:48'); await openMap(map);
     await page.locator('#pack-select').selectOption('kenney-scribble'); await openTilesets(page); await page.locator('#delete-pack').click(); assert.match(await page.locator('#delete-pack-warning').textContent(), /Placed tiles will stay/);
     await page.locator('#delete-pack-form button[type=submit]').click(); await closeTilesets(page);
     assert.equal(await page.locator('#pack-select option[value=kenney-scribble]').count(), 0); assert.equal(await page.locator('#pack-select option[value=kenney-tiny]').count(), 1); assert.deepEqual((await saved()).layers, map.layers);
     await page.waitForFunction(() => document.querySelector('#save-state').textContent === 'Saved locally in this browser'); await page.reload(); await page.waitForFunction(() => document.querySelector('#map-name').value === 'Retained Kenney'); assert.equal(await page.locator('#pack-select option[value=kenney-scribble]').count(), 0); assert.deepEqual((await saved()).layers, map.layers);
     await page.locator('#pack-select').selectOption('default-tiles'); assert.deepEqual(await ids(), expected);
-    await openTilesets(page); assert.equal(await page.locator('#delete-pack').isVisible(), false); await page.locator('#add-kenney').click(); await closeTilesets(page); assert.equal(await page.locator('#pack-select option[value=kenney-scribble]').count(), 1);
+    await openTilesets(page); assert.equal(await page.locator('#delete-pack').isVisible(), false); await addKenney(page); await closeTilesets(page); assert.equal(await page.locator('#pack-select option[value=kenney-scribble]').count(), 1);
     // Custom brushes can also be rearranged; their placement IDs never change.
     const source = await page.evaluate(() => { const canvas = document.createElement('canvas'); canvas.width = 48; canvas.height = 16; const context = canvas.getContext('2d'); context.fillStyle = 'red'; context.fillRect(0, 0, 48, 16); return canvas.toDataURL(); });
     const custom = createMap(4, 4, 'Custom arrangement'); custom.packs = [{ id: 'custom-order', name: 'Arrange me', images: [{ id: 'source', data: source, width: 48, height: 16 }], tiles: [0, 1, 2].map(i => ({ id: `custom-order:${i}`, name: `Tile ${i}`, image: 'source', rect: [i * 16, 0, 16, 16], category: 'Custom' })) }]; custom.layers[0].cells[0] = placement('custom-order:0'); await openMap(custom);

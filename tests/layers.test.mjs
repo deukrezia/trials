@@ -12,6 +12,16 @@ test('maps start with three ordered layers and allow up to twelve with unique pe
   history.undo(); assert.equal(map.layers.length, 11); history.redo(); assert.deepEqual(map, before); assert.deepEqual(validateMap(map), map);
 });
 
+test('layer renaming preserves placement IDs, validates names and supports undo/redo', () => {
+  const map = createMap(4, 4), history = new History(map), layer = map.layers[0]; layer.cells[5] = placement('red');
+  const before = structuredClone(layer);
+  assert.equal(setLayerState(history, layer.id, { name: '  Stone floor  ' }), true);
+  assert.equal(layer.name, 'Stone floor'); assert.equal(layer.id, before.id); assert.deepEqual(layer.cells, before.cells);
+  history.undo(); assert.deepEqual(map.layers[0], before); history.redo(); assert.equal(map.layers[0].name, 'Stone floor');
+  for (const name of ['', '   ', 'x'.repeat(101), 42]) assert.throws(() => setLayerState(history, layer.id, { name }), /layer name/);
+  assert.equal(history.undoStack.length, 1);
+});
+
 test('duplicates preserve all layer properties and own independent cells; deleting remains undoable', () => {
   const map = createMap(4, 4), history = new History(map), original = map.layers[2];
   original.cells[5] = placement('blue', 2, true); original.locked = true; original.visible = false; original.opacity = .25;

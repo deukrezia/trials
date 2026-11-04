@@ -14,3 +14,5 @@ This instruction authorizes publishing completed requested changes without askin
 The Windows desktop build is a separate artifact; Pages publishes only `dist/web`. Do not publish the Windows ZIP as part of the web site. Advertising and purchase links appear only after the owner supplies their configuration.
 
 GitHub CLI is available locally at `.test-output/github-cli/bin/gh.exe` and is authenticated through the Windows keyring. Use `gh auth status` without printing tokens if a connection check is needed. The GitHub connector can inspect workflow runs and change repository files; repository creation and Pages administration require the CLI.
+
+`hosting/github-root` mirrors the small `deukrezia/deukrezia.github.io` repository, checked out locally at `.test-output/github-root`. That repository redirects the domain root to Trials and serves the domain-level AdSense verification and `ads.txt` file. If those files change, copy the intended files into that checkout, commit and push its `main` branch too. Its Pages source is GitHub Actions. Never overwrite unrelated files in that repository.

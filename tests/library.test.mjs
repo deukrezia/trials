@@ -12,6 +12,18 @@ test('a migrated library appears in every new project and opening another projec
   const other = createMap(4, 4); other.packs = [pack('custom-other')]; const merged = adoptProjectLibrary(library, other); assert.equal(merged.packs.length, 2); assert.equal(projectWithLibrary(merged, other).packs.length, 2);
 });
 
+test('tileset descriptions persist across projects, old maps, reload validation and library backups', () => {
+  const source = project(); source.packDescriptions = { 'custom-library': 'Floors and walls', 'kenney-tiny': 'Pixel dungeon art' };
+  const state = adoptProjectLibrary(emptyLibrary(), source), blank = projectWithLibrary(state, createMap(4, 4));
+  assert.deepEqual(blank.packDescriptions, source.packDescriptions);
+  const old = project(); old.packDescriptions = { 'custom-library': 'Old text' };
+  assert.equal(projectWithLibrary(adoptProjectLibrary(state, old), old).packDescriptions['custom-library'], 'Floors and walls');
+  const restored = validateLibrary(JSON.parse(JSON.stringify(state))); assert.deepEqual(restored.packDescriptions, state.packDescriptions);
+  const backup = emptyLibrary(); backup.packDescriptions['custom-library'] = 'Changed description';
+  assert.equal(mergeLibraryBackup(state, backup).packDescriptions['custom-library'], 'Changed description');
+  assert.throws(() => validateLibrary({ ...state, packDescriptions: { 'custom-library': 'x'.repeat(1001) } }), /description/);
+});
+
 test('global deletion stays deleted when an older project opens, while map artwork stays embedded', () => {
   const original = project(); let library = adoptProjectLibrary(emptyLibrary(), original), current = projectWithLibrary(library, original);
   deletePack(new History(current), 'custom-library'); library = libraryFromProject(library, current);

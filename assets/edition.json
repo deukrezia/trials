@@ -1,1 +1,16 @@
-{ "edition": "web", "ad": { "enabled": true, "imageUrl": "", "targetUrl": "", "alt": "Sponsor" }, "gumroadUrl": "" }
+{
+  "edition": "web",
+  "ad": {
+    "enabled": true,
+    "imageUrl": "",
+    "targetUrl": "",
+    "alt": "Sponsor",
+    "reserveSpace": true,
+    "width": 180,
+    "height": 150,
+    "provider": "adsense",
+    "publisherId": "ca-pub-9733707597960049",
+    "slotId": "3946508423"
+  },
+  "gumroadUrl": ""
+}
