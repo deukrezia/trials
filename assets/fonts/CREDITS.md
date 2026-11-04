@@ -1,6 +1,6 @@
-# Tiny5
+# Silkscreen
 
-Tiny5 is by The Tiny5 Project Authors (https://github.com/Gissio/font_tiny5), bundled locally through @fontsource/tiny5.
-The font is distributed under the SIL Open Font License 1.1; see Tiny5-LICENSE.
+Silkscreen is by The Silkscreen Project Authors (https://github.com/googlefonts/silkscreen), bundled locally through @fontsource/silkscreen.
+The font is distributed under the SIL Open Font License 1.1; see Silkscreen-LICENSE.
 
-The Latin WOFF2 regular font is shipped. No external font service is contacted at runtime.
+The Latin WOFF2 regular and bold fonts are shipped. No external font service is contacted at runtime.

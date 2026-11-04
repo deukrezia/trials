@@ -1,5 +1,6 @@
-@font-face { font-family: "Tiny5"; src: url("assets/fonts/tiny5-latin-400-normal.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
-:root { color-scheme: dark; --bg: #181722; --panel: #2b293c; --raised: #403950; --line: #625671; --text: #eee4cc; --muted: #b7a9bd; --accent: #f0c477; --green: #b2ca8b; --shadow: #100f1a; font-family: 'Tiny5', 'Courier New', monospace; font-size: 15px; }
+@font-face { font-family: "Silkscreen"; src: url("assets/fonts/silkscreen-latin-400-normal.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "Silkscreen"; src: url("assets/fonts/silkscreen-latin-700-normal.woff2") format("woff2"); font-style: normal; font-weight: 700; font-display: swap; }
+:root { color-scheme: dark; --bg: #181722; --panel: #2b293c; --raised: #403950; --line: #625671; --text: #eee4cc; --muted: #b7a9bd; --accent: #f0c477; --green: #b2ca8b; --shadow: #100f1a; font-family: 'Silkscreen', 'Courier New', monospace; font-size: 15px; }
 * { box-sizing: border-box; }
 body { margin: 0; overflow: hidden; background: var(--bg); color: var(--text); }
 button, input, select { font: inherit; }
@@ -15,7 +16,7 @@ button.primary:hover { background: #f0c477; }
 input, select { min-width: 0; color: #f2e7ce; background: #1c1b2a; border: 2px solid #171622; border-right-color: #655773; border-bottom-color: #655773; border-radius: 0; padding: 9px; box-shadow: none; }
 input::placeholder { color: #a99ab0; }
 a { color: var(--accent); }
-kbd { display: inline-block; font: 11px 'Tiny5', monospace; color: #c5b7ca; background: #221f30; border: 1px solid #74607b; border-bottom: 2px solid #13111e; padding: 1px 4px; white-space: nowrap; }
+kbd { display: inline-block; font: 11px 'Silkscreen', monospace; color: #c5b7ca; background: #221f30; border: 1px solid #74607b; border-bottom: 2px solid #13111e; padding: 1px 4px; white-space: nowrap; }
 .app-header { position: relative; z-index: 2; height: 86px; display: flex; align-items: center; gap: 28px; padding: 0 24px; background: #302b42; border-top: 3px solid #b79a78; border-bottom: 4px solid #110f1d; box-shadow: inset 0 -2px #655370; }
 .brand { text-decoration: none; color: #f4d49b; font-size: 29px; font-weight: 700; line-height: 1; letter-spacing: 1px; white-space: nowrap; text-shadow: 2px 2px #141020; }
 .document-title { padding-left: 26px; border-left: 2px solid #594b67; display: flex; flex-direction: column; flex: 1; min-width: 170px; }
@@ -394,12 +395,16 @@ html[data-desktop-shell] .document-title { border-left: 0; padding-left: 0; }
 .edition-comparison td:last-child { color: #c3d39e; background: #303139; }
 .edition-purchase { display: flex; flex-direction: column; align-items: flex-end; gap: 18px; margin-top: 25px; color: #b7a9bd; font-size: 15px; line-height: 1.4; }
 .purchase-link { padding: 10px 16px; background: #d9aa65; color: #2d2130; border: 2px solid #171020; text-decoration: none; }
-:root { font-size: 16px; font-synthesis: none; }
-#pack-select, .document-actions button, .layer-select, .tool-label, .text-button, .history-tools button { font-size: 16px; }
+:root { font-size: 14px; font-synthesis: none; letter-spacing: -.035em; }
+button, input, select { letter-spacing: inherit; }
+.brand, .window-brand, .pack-label { letter-spacing: -.035em; }
+.window-brand > span { letter-spacing: -.035em; }
+#categories button { font-size: 12px; padding-left: 5px; padding-right: 5px; }
+#pack-select, .document-actions button, .layer-select, .tool-label, .text-button, .history-tools button { font-size: 14px; }
 .pack-label, #save-state, .support-link, .tileset-list-heading, .categories button, .status-bar, .edition-rules, dialog p.edition-rules { font-size: 14px; }
-dialog label, .shortcut-list, .tileset-list-item, .library-utilities button, #new-tileset, .tileset-manager-actions button { font-size: 16px; }
-kbd, .tool-group kbd { font-size: 14px; }
-.library-actions > button, .transform-controls button, #selection-actions button, .quiet-button { font-size: 16px; }
+dialog label, .shortcut-list, .tileset-list-item, .library-utilities button, #new-tileset, .tileset-manager-actions button { font-size: 14px; }
+kbd, .tool-group kbd { font-size: 12px; }
+.library-actions > button, .transform-controls button, #selection-actions button, .quiet-button { font-size: 13px; }
 @media (max-width: 1050px) { .document-actions button, .tool-label, .layer-select { font-size: 14px; } }
 @media (max-width: 900px) {
   html[data-desktop-shell] .workspace { height: calc(100dvh - 72px - var(--titlebar-height)); }

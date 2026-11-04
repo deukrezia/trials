@@ -31,7 +31,7 @@ test('editor: paint, history, layers, import, portable save, PNG and restore', {
     assert.deepEqual(await page.locator('.layer-select').allTextContents(), ['Objects', 'Walls', 'Ground']);
     assert.equal(await page.locator('#pack-select').textContent(), 'All tilesetsDefault TilesScribble DungeonsTiny Dungeon');
     assert.equal(await page.locator('body > .workspace').textContent().then(text => /Kenney|FREE|SELECT COMMAND|CLICK TO EQUIP/.test(text)), false);
-    assert.equal(await page.evaluate(() => document.fonts.check('16px "Tiny5"')), true);
+    assert.equal(await page.evaluate(() => document.fonts.check('16px "Silkscreen"')), true);
     await page.screenshot({ path: path.join(outputDir, 'editor-desktop.png') });
     await page.locator('#pack-select').selectOption('kenney-tiny');
     assert.equal(await page.locator('.tile-button').count(), 132);

@@ -7,8 +7,10 @@
 
 ## Publishing changes
 
-The owner requested GitHub Pages hosting and automatic updates from this project. After completing an authorized editor change, run the relevant checks, commit the intended source changes and push the deployment branch to the configured GitHub origin. GitHub Actions in `.github/workflows/pages.yml` rebuilds and publishes the Free web edition on pushes to `main` or `master`. Check the workflow result and public URL before reporting that the live site is updated.
+The owner requested GitHub Pages hosting and automatic updates from this project. The GitHub source is `https://github.com/deukrezia/trials` (`origin`, deployment branch `main`); the public editor is `https://deukrezia.github.io/trials/`. After completing an authorized editor change, run the relevant checks, commit the intended source changes and push the deployment branch to the configured GitHub origin. GitHub Actions in `.github/workflows/pages.yml` rebuilds and publishes the Free web edition on pushes to `main` or `master`. Check the workflow result and public URL before reporting that the live site is updated.
 
 This instruction authorizes publishing completed requested changes without asking again. Do not publish unfinished work or unrelated user changes. Keep `node_modules`, `.test-output`, `dist`, `out`, credentials, local maps and personal tile-library backups out of source commits. Never force-push. If GitHub authentication or the remote is unavailable, finish and verify the local work and report the specific remaining connection requirement; do not claim a deployment occurred.
 
 The Windows desktop build is a separate artifact; Pages publishes only `dist/web`. Do not publish the Windows ZIP as part of the web site. Advertising and purchase links appear only after the owner supplies their configuration.
+
+GitHub CLI is available locally at `.test-output/github-cli/bin/gh.exe` and is authenticated through the Windows keyring. Use `gh auth status` without printing tokens if a connection check is needed. The GitHub connector can inspect workflow runs and change repository files; repository creation and Pages administration require the CLI.

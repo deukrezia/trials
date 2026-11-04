@@ -16,7 +16,7 @@ test('palette organization, contextual edition details and removable optional Ke
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true }), errors = [];
     page.on('pageerror', error => errors.push(error.message)); await page.goto('http://127.0.0.1:4195'); await page.waitForSelector('.tile-button');
     assert.equal(await page.locator('#desktop-titlebar').isVisible(), false);
-    assert.match(await page.locator('body').evaluate(node => getComputedStyle(node).fontFamily), /Tiny5/);
+    assert.match(await page.locator('body').evaluate(node => getComputedStyle(node).fontFamily), /Silkscreen/);
     const ids = () => page.locator('.tile-button').evaluateAll(nodes => nodes.map(node => node.dataset.tile));
     const tile = id => page.locator(`.tile-button[data-tile="${id}"]`);
     const original = await ids(); assert.deepEqual(original.slice(0, 9), [0, 1, 2, 8, 9, 10, 16, 17, 18].map(i => `default-tiles:${i}`));

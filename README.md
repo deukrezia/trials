@@ -2,6 +2,8 @@
 
 A manual tile-based VTT battlemap editor with a pixel fantasy interface. No AI-generated images. Diagonal autotiling is deferred.
 
+**[Open Trials online](https://deukrezia.github.io/trials/)** · [GitHub source](https://github.com/deukrezia/trials)
+
 ## Run locally
 
 Run **Start Trials.cmd**, or `npm.cmd start` and open http://127.0.0.1:4173. Node.js 20+ is required for local development. Fonts, tiles and the PDF library are bundled; the desktop build works offline. The old Start Map Maker launcher remains compatible.
@@ -55,7 +57,9 @@ Web output: `dist/web`. Windows portable ZIP: `out/make/zip/win32/x64/Trials-win
 
 Configure `config/distribution.json` before distribution: Gumroad URL and optional HTTPS sponsor image/link. Missing ad configuration collapses the slot. A purchase/download link stays hidden until its URL exists. No ad-provider script or purchasing/license verification is integrated. Web edition limits are client-side product behavior, not tamper-proof DRM.
 
-The Pages workflow in `.github/workflows/pages.yml` automatically tests, builds and deploys Free when completed changes are pushed to `main` or `master`. Pages must be enabled with **GitHub Actions** as its publishing source once for the connected repository. `AGENTS.md` records the owner's instruction to publish completed requested changes from this project and verify the live deployment. GitHub account connection and initial repository setup are still required; no public deployment has occurred yet. The local preview at http://127.0.0.1:4173/ is separate and needs its server running.
+The source repository is `deukrezia/trials`, connected as this project's `origin` on branch `main`. The Pages workflow in `.github/workflows/pages.yml` automatically tests, builds and deploys Free when completed changes are pushed to `main` or `master`. Pages uses **GitHub Actions** as its publishing source. `AGENTS.md` records the owner's instruction to publish completed requested changes from this project and verify the live deployment. The local preview at http://127.0.0.1:4173/ is separate and needs its server running; the GitHub Pages site does not depend on this computer staying on.
+
+Browser storage is scoped to the site address: existing local maps and tileset libraries remain at the local preview address. Save a map and use **Back up library** there, then open/import those backups on the public site to transfer them. No local map or personal library backups are published to the repository.
 
 GitHub's Pages policies need checking before an ad-supported commercial launch: https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits . A different static host can serve the same web output. Build paths are relative for repository-subpath hosting. No Gumroad upload has occurred.
 
@@ -63,4 +67,4 @@ Tests use separate headless Edge profiles or a hidden Electron test window and d
 
 ## Bundled licenses
 
-Kenney credits/licenses are beside each optional pack. Tiny5 is bundled locally under SIL OFL 1.1 (`assets/fonts/Tiny5-LICENSE`). jsPDF's license is in `assets/vendor/jspdf-LICENSE.txt`. The software source is currently UNLICENSED; no open-source software license has been selected. Existing storage names and file formats retain their original identifiers to preserve old projects.
+Kenney credits/licenses are beside each optional pack. Silkscreen is bundled locally under SIL OFL 1.1 (`assets/fonts/Silkscreen-LICENSE`). jsPDF's license is in `assets/vendor/jspdf-LICENSE.txt`. The software source is currently UNLICENSED; no open-source software license has been selected. Existing storage names and file formats retain their original identifiers to preserve old projects.
