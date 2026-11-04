@@ -1,4 +1,5 @@
 import { libraryPacks, libraryTiles } from './model.js';
+import { baseTileSize } from './multi-tile.js';
 
 export const FREE_UPGRADE = 'Buy/download the desktop app for 12 layers and no Free upload restrictions.';
 export function editionPolicy(edition = 'web') {
@@ -12,7 +13,7 @@ export function policyTiles(pack, policy) {
   const tiles = libraryTiles(pack);
   if (policy.edition === 'desktop' || !tiles.length) return tiles;
   const used = new Set(tiles.map(tile => tile.image)), allowedImages = new Set(pack.images.filter(image => used.has(image.id)).slice(0, policy.maxImports).map(image => image.id));
-  return tiles.filter(tile => allowedImages.has(tile.image) && policy.tileSizes.includes(tile.rect[2]) && tile.rect[2] === tile.rect[3] && tile.rect[0] + tile.rect[2] <= policy.maxImageSize && tile.rect[1] + tile.rect[3] <= policy.maxImageSize);
+  return tiles.filter(tile => { const [w, h] = baseTileSize(tile); return allowedImages.has(tile.image) && policy.tileSizes.includes(w) && w === h && tile.rect[0] + tile.rect[2] <= policy.maxImageSize && tile.rect[1] + tile.rect[3] <= policy.maxImageSize; });
 }
 export function assertTileSetup(policy, width, height) {
   if (policy.tileSizes && (width !== height || !policy.tileSizes.includes(width))) throw new Error(`Free supports 16×16 or 32×32 tiles. ${FREE_UPGRADE}`);

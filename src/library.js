@@ -3,7 +3,7 @@ import { createMap, validateMap, libraryPacks, libraryTiles, exportablePack } fr
 const clone = value => structuredClone(value);
 export const emptyLibrary = () => ({ format: 'vtt-tile-library', version: 1, packs: [], packNames: {}, packDescriptions: {}, enabledOptional: [], removedPacks: [], removedTiles: [], tileOrders: {} });
 function sameVisual(pack, tile, source, original, cache) {
-  if ((tile.pixelArt ?? true) !== (original.pixelArt ?? true) || tile.rect.some((value, i) => value !== original.rect[i])) return false;
+  if ((tile.pixelArt ?? true) !== (original.pixelArt ?? true) || (tile.cellSpacing || 0) !== (original.cellSpacing || 0) || tile.rect.some((value, i) => value !== original.rect[i])) return false;
   const key = JSON.stringify([pack.id, tile.image, original.image]);
   if (!cache.has(key)) { const image = pack.images.find(image => image.id === tile.image), other = source.images.find(image => image.id === original.image); cache.set(key, image?.data === other?.data && image?.width === other?.width && image?.height === other?.height); }
   return cache.get(key);
@@ -107,7 +107,9 @@ export function orderedTiles(tiles, savedOrder = []) {
 }
 export function moveTileOrder(tiles, savedOrder, sourceId, targetId, after = false) {
   const order = orderedTiles(tiles, savedOrder).map(tile => tile.id);
-  if (sourceId === targetId || !order.includes(sourceId) || !order.includes(targetId)) return order;
-  order.splice(order.indexOf(sourceId), 1); order.splice(order.indexOf(targetId) + Number(after), 0, sourceId);
-  return order;
+  const ids = new Set(Array.isArray(sourceId) ? sourceId : [sourceId]), moving = order.filter(id => ids.has(id));
+  if (ids.has(targetId) || !moving.length || !order.includes(targetId)) return order;
+  const rest = order.filter(id => !ids.has(id));
+  rest.splice(rest.indexOf(targetId) + Number(after), 0, ...moving);
+  return rest;
 }

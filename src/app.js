@@ -7,6 +7,7 @@ import { emptyLibrary, validateLibrary, adoptProjectLibrary, projectWithLibrary,
 import { configureEdition } from './edition.js';
 import { editionPolicy, policyPacks, policyTiles, importCount, assertTileSetup, assertImportCapacity, cropBounds, FREE_UPGRADE } from './edition-policy.js';
 import { addFreePNGWatermark } from './watermark.js';
+import { footprint, baseTileSize, partRect, stampParts, rotatedFootprint, patternAnchors, sheetEntries } from './multi-tile.js';
 import { initializeWindowChrome } from './window-chrome.js';
 
 initializeWindowChrome();
@@ -19,12 +20,14 @@ let map, history, builtinPacks = [], builtinTiles = [], selected, layerIndex = 0
 let activeCategory = 'All', activePack = 'all', grid = true, zoom = 1, pan = { x: 0, y: 0 };
 let pointer = null, pendingMapMove = null, hover = null, spaceHeld = false, dirty = false, revision = 0;
 let selection = new Set();
-let shapeType = 'rectangle', shapeOutline = false;
+let shapeType = 'rectangle', shapeOutline = false, shapePlacement = null;
+let importRegions = [], importDrag = null, importLayoutKey = '';
+let paletteSelection = new Set(), paletteAnchor = null;
 let customImages = new Map(), deletingPackId = null, importTargetId = null;
 let managingPackId = null, deletingImport = null;
 let draggedTileId = null, suppressTileClick = false;
 let activeLayerId = null, draggedLayerId = null, deletingLayerId = null;
-let renamingLayerId = null;
+let renamingLayerId = null, renamingPackId = null;
 let selectedLayerIds = new Set(), layerAnchorId = null;
 let sharedLibrary = emptyLibrary(), libraryWrite = Promise.resolve();
 let policy = editionPolicy('web');
@@ -136,7 +139,7 @@ async function installMap(candidate) {
   updateName(); renderPacks(); renderCategories(); renderPalette(); renderLayers(); updateBrush(); updateStats(); fitMap();
   dirty = false; revision++; autosave();
 }
-function updateName() { document.title = `${map.name} · Trials`; }
+function updateName() { document.title = `Trials - ${map.name}`; }
 function renderPacks() {
   const select = $('pack-select'); select.replaceChildren(new Option('All tilesets', 'all'));
   for (const pack of packs) select.add(new Option(map.packNames[pack.id] || pack.name.replace('Kenney · ', ''), pack.id));
@@ -160,7 +163,7 @@ function rebuildLibrary() {
 }
 function choosePack(id, equip = false) {
   if (id !== 'all' && !packs.some(pack => pack.id === id)) id = 'all';
-  finishStroke(); activePack = id; activeCategory = 'All';
+  finishStroke(); paletteSelection.clear(); activePack = id; activeCategory = 'All';
   if (equip && tiles.get(selected)?.packId !== id) {
     selected = id === 'kenney-tiny' ? 'tiny:48' : id === 'kenney-scribble' ? 'kenney:tiles.png' : availablePackTiles(packs.find(pack => pack.id === id) || { tiles: [] })[0]?.id;
     rotation = 0; flip = false;
@@ -176,16 +179,19 @@ function renderCategories() {
   if (!builtin || categories.length <= 1) { activeCategory = 'All'; $('categories').hidden = true; return; }
   for (const category of ['All', ...['Floors', 'Walls', 'Props', 'Characters', 'Items', 'Tiles'].filter(category => categories.includes(category))]) {
     const button = document.createElement('button'); button.textContent = category; button.classList.toggle('active', category === activeCategory); button.setAttribute('aria-pressed', category === activeCategory);
-    button.onclick = () => { activeCategory = category; renderCategories(); renderPalette(); }; $('categories').append(button);
+    button.onclick = () => { activeCategory = category; paletteSelection.clear(); renderCategories(); renderPalette(); }; $('categories').append(button);
   }
 }
-function drawTile(context, tileId, x, y, pixels, turns = 0, mirrored = false, opacity = 1) {
+function drawTile(context, tileId, x, y, pixels, turns = 0, mirrored = false, opacity = 1, part = null) {
   const tile = tiles.get(tileId), image = tile && images.get(tile.src);
   if (!image) return;
-  const [sx, sy, sw, sh] = tile.rect;
+  const [sx, sy, sw, sh] = partRect(tile, part);
   context.save(); context.globalAlpha *= opacity; context.translate(x + pixels / 2, y + pixels / 2); context.rotate(turns * Math.PI / 2); context.scale(mirrored ? -1 : 1, 1);
   context.imageSmoothingEnabled = !tile.pixelArt;
   context.drawImage(image, sx, sy, sw, sh, -pixels / 2, -pixels / 2, pixels, pixels); context.restore();
+}
+function drawStamp(context, tileId, x, y, pixels, turns = 0, mirrored = false, opacity = 1) {
+  for (const part of stampParts(placement(tileId, turns, mirrored), footprint(tiles.get(tileId)), 'preview')) drawTile(context, tileId, x + part.x * pixels, y + part.y * pixels, pixels, turns, mirrored, opacity, part.cell.part);
 }
 function renderPalette() {
   const categoryOrder = ['Floors', 'Walls', 'Props', 'Characters', 'Items', 'Custom'];
@@ -196,34 +202,46 @@ function renderPalette() {
     if (pack.collection === 'kenney') entries.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
     return orderedTiles(entries, sharedLibrary.tileOrders[pack.id]).filter(tile => activeCategory === 'All' || tile.category === activeCategory);
   });
+  paletteSelection = new Set([...paletteSelection].filter(id => visible.some(tile => tile.id === id)));
   $('no-tiles').hidden = !!visible.length; $('tile-grid').replaceChildren();
   const activeCustom = availableCustomPacks().find(pack => pack.id === activePack);
   $('no-tiles').textContent = activeCustom && !availablePackTiles(activeCustom).length ? libraryTiles(activeCustom).length ? `These imports need the desktop app. ${FREE_UPGRADE}` : 'This tileset is empty. Import tiles to add brushes.' : 'No tiles in this category.';
   const fragment = document.createDocumentFragment();
   for (const tile of visible) {
-    const button = document.createElement('button'); button.className = 'tile-button'; button.classList.toggle('selected', selected === tile.id); button.dataset.tile = tile.id;
-    button.title = `${tile.name} · Drag to arrange; Alt + arrows to reorder`; button.setAttribute('aria-label', tile.name); button.setAttribute('aria-pressed', selected === tile.id); button.draggable = true;
-    const thumb = document.createElement('canvas'); thumb.width = 64; thumb.height = 64; thumb.classList.toggle('pixel-art', !!tile.pixelArt); drawTile(thumb.getContext('2d'), tile.id, 0, 0, 64); button.append(thumb);
-    button.onclick = () => { if (suppressTileClick) return; selected = tile.id; rotation = 0; flip = false; if (!['brush', 'fill', 'shape'].includes(tool)) setTool('brush'); updateBrush(); for (const item of $('tile-grid').children) { item.classList.toggle('selected', item.dataset.tile === selected); item.setAttribute('aria-pressed', item.dataset.tile === selected); } };
-    button.ondragstart = event => { finishStroke(); draggedTileId = tile.id; suppressTileClick = true; event.dataTransfer.setData('application/x-trials-tile', tile.id); event.dataTransfer.effectAllowed = 'move'; button.classList.add('dragging-tile'); };
+    const button = document.createElement('button'); button.className = 'tile-button'; button.classList.toggle('selected', selected === tile.id); button.classList.toggle('organizing', paletteSelection.has(tile.id)); button.dataset.tile = tile.id;
+    button.title = `${tile.name}${tile.footprint ? ` · ${tile.footprint.join('×')} cells` : ''} · Ctrl/Shift select; drag to arrange`; button.setAttribute('aria-label', tile.name); button.setAttribute('aria-pressed', selected === tile.id); button.draggable = true;
+    const thumb = document.createElement('canvas'); thumb.width = 64; thumb.height = 64; thumb.classList.toggle('pixel-art', !!tile.pixelArt); const [tw, th] = footprint(tile), scale = 64 / Math.max(tw, th); drawStamp(thumb.getContext('2d'), tile.id, (64 - tw * scale) / 2, (64 - th * scale) / 2, scale); button.append(thumb);
+    button.onclick = event => { if (suppressTileClick) return;
+      if (event.ctrlKey || event.metaKey || event.shiftKey) {
+        const siblings = visible.filter(item => item.packId === tile.packId);
+        paletteSelection = new Set([...paletteSelection].filter(id => tiles.get(id)?.packId === tile.packId));
+        if (event.shiftKey && siblings.some(item => item.id === paletteAnchor)) { const a = siblings.findIndex(item => item.id === paletteAnchor), b = siblings.indexOf(tile); for (const item of siblings.slice(Math.min(a,b), Math.max(a,b)+1)) paletteSelection.add(item.id); }
+        else { if (paletteSelection.has(tile.id)) paletteSelection.delete(tile.id); else paletteSelection.add(tile.id); paletteAnchor = tile.id; }
+        for (const item of $('tile-grid').children) item.classList.toggle('organizing', paletteSelection.has(item.dataset.tile));
+        return;
+      }
+      paletteSelection.clear(); paletteAnchor = tile.id; for (const item of $('tile-grid').children) item.classList.remove('organizing'); selected = tile.id; rotation = 0; flip = false; if (!['brush', 'fill', 'shape'].includes(tool)) setTool('brush'); updateBrush(); for (const item of $('tile-grid').children) { item.classList.toggle('selected', item.dataset.tile === selected); item.setAttribute('aria-pressed', item.dataset.tile === selected); } };
+    button.ondragstart = event => { finishStroke(); draggedTileId = tile.id; if (!paletteSelection.has(tile.id)) paletteSelection = new Set([tile.id]); for (const item of $('tile-grid').children) item.classList.toggle('organizing', paletteSelection.has(item.dataset.tile)); suppressTileClick = true; event.dataTransfer.setData('application/x-trials-tile', tile.id); event.dataTransfer.effectAllowed = 'move'; button.classList.add('dragging-tile'); };
     button.ondragover = event => {
-      if (!draggedTileId || draggedTileId === tile.id || tiles.get(draggedTileId)?.packId !== tile.packId) return;
+      if (!draggedTileId || paletteSelection.has(tile.id) || tiles.get(draggedTileId)?.packId !== tile.packId) return;
       event.preventDefault(); event.dataTransfer.dropEffect = 'move'; clearTileDropMarks();
       button.classList.add(event.clientX < button.getBoundingClientRect().left + button.offsetWidth / 2 ? 'drop-before' : 'drop-after');
     };
     button.ondragleave = () => button.classList.remove('drop-before', 'drop-after');
     button.ondrop = event => {
       event.preventDefault(); event.stopPropagation();
-      if (draggedTileId && tiles.get(draggedTileId)?.packId === tile.packId) reorderPaletteTile(tile.packId, draggedTileId, tile.id, event.clientX >= button.getBoundingClientRect().left + button.offsetWidth / 2);
+      if (draggedTileId && tiles.get(draggedTileId)?.packId === tile.packId) reorderPaletteTile(tile.packId, [...paletteSelection], tile.id, event.clientX >= button.getBoundingClientRect().left + button.offsetWidth / 2);
       draggedTileId = null; clearTileDropMarks(); setTimeout(() => suppressTileClick = false, 0);
     };
     button.ondragend = () => { draggedTileId = null; button.classList.remove('dragging-tile'); clearTileDropMarks(); setTimeout(() => suppressTileClick = false, 0); };
     button.onkeydown = event => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') { event.preventDefault(); event.stopPropagation(); paletteSelection = new Set(visible.filter(item => item.packId === tile.packId).map(item => item.id)); renderPalette(); [...$('tile-grid').children].find(item => item.dataset.tile === tile.id)?.focus(); return; }
+      if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); paletteSelection.clear(); for (const item of $('tile-grid').children) item.classList.remove('organizing'); return; }
       if (!event.altKey || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
       event.preventDefault(); event.stopPropagation();
       const siblings = visible.filter(item => item.packId === tile.packId), index = siblings.findIndex(item => item.id === tile.id), direction = ['ArrowLeft', 'ArrowUp'].includes(event.key) ? -1 : 1;
       const target = siblings[index + direction * (['ArrowUp', 'ArrowDown'].includes(event.key) ? 3 : 1)];
-      if (target) reorderPaletteTile(tile.packId, tile.id, target.id, direction > 0, tile.id);
+      if (target) reorderPaletteTile(tile.packId, paletteSelection.has(tile.id) ? [...paletteSelection] : tile.id, target.id, direction > 0, tile.id);
     };
     fragment.append(button);
   }
@@ -248,7 +266,7 @@ function updateBrush() {
   $('rotation-label').hidden = editingSelection;
   $('selected-name').textContent = editingSelection ? 'Selection' : tile.name;
   $('brush-preview').classList.toggle('pixel-art', !!tile?.pixelArt);
-  const preview = $('brush-preview'), brushCtx = preview.getContext('2d'); brushCtx.clearRect(0, 0, preview.width, preview.height); drawTile(brushCtx, selected, 12, 12, 120, rotation, flip);
+  const preview = $('brush-preview'), brushCtx = preview.getContext('2d'); brushCtx.clearRect(0, 0, preview.width, preview.height); const size = rotatedFootprint(footprint(tile), rotation), scale = 120 / Math.max(...size); drawStamp(brushCtx, selected, (144-size[0]*scale)/2, (144-size[1]*scale)/2, scale, rotation, flip);
   $('rotation-label').textContent = `${rotation * 90}°`; $('flip-brush').classList.toggle('active', !editingSelection && flip); $('flip-brush').setAttribute('aria-pressed', !editingSelection && flip);
   requestRender();
 }
@@ -306,6 +324,7 @@ function updateCursor() {
   else if (tool === 'select') { if (!map.layers.some(selectionLayer)) cursor = 'not-allowed'; else if (inside && selection.has(hover.y * map.width + hover.x) && map.layers.some(item => selectionLayer(item) && item.cells[hover.y * map.width + hover.x])) cursor = 'grab'; }
   else if (tool === 'picker') { const top = inside ? [...map.layers].reverse().find(item => item.visible && item.opacity !== 0 && item.cells[hover.y * map.width + hover.x])?.cells[hover.y * map.width + hover.x] : null; cursor = top && !tiles.get(top.tile)?.restricted ? 'copy' : 'not-allowed'; }
   else if (!layer.visible || layer.opacity === 0 || layer.locked || (tool !== 'eraser' && !tiles.has(selected))) cursor = 'not-allowed';
+  else if (inside && ['brush','fill'].includes(tool) && rotatedFootprint(footprint(tiles.get(selected)),rotation).some((n,i) => (i ? hover.y : hover.x) + n > (i ? map.height : map.width))) cursor = 'not-allowed';
   else if (tool === 'eraser' || tool === 'fill') cursor = 'cell';
   viewport.style.cursor = cursor;
 }
@@ -367,9 +386,9 @@ function render() {
     ctx.save(); ctx.globalAlpha *= layer.opacity ?? 1;
     for (let y = sourceMinY; y < sourceMaxY; y++) for (let x = sourceMinX; x < sourceMaxX; x++) {
       const index = y * map.width + x, cell = layer.cells[index];
-      if (cell && !(dragging && selectionLayer(layer) && selection.has(index))) drawTile(ctx, cell.tile, (x + (movingMap ? dx : 0)) * px, (y + (movingMap ? dy : 0)) * px, px, cell.rotation, cell.flip);
+      if (cell && !(dragging && selectionLayer(layer) && selection.has(index))) drawTile(ctx, cell.tile, (x + (movingMap ? dx : 0)) * px, (y + (movingMap ? dy : 0)) * px, px, cell.rotation, cell.flip, 1, cell.part);
     }
-    if (dragging && selectionLayer(layer)) for (const index of selection) { const cell = layer.cells[index]; if (cell) drawTile(ctx, cell.tile, (index % map.width + dx) * px, (Math.floor(index / map.width) + dy) * px, px, cell.rotation, cell.flip, .8); }
+    if (dragging && selectionLayer(layer)) for (const index of selection) { const cell = layer.cells[index]; if (cell) drawTile(ctx, cell.tile, (index % map.width + dx) * px, (Math.floor(index / map.width) + dy) * px, px, cell.rotation, cell.flip, .8, cell.part); }
     ctx.restore();
   }
   ctx.restore();
@@ -382,21 +401,21 @@ function render() {
     const bounds = selectionBounds(map, selection);
     if (bounds) { ctx.setLineDash([5, 4]); ctx.strokeRect((bounds.x + dx) * px, (bounds.y + dy) * px, bounds.width * px, bounds.height * px); } ctx.restore();
   }
-  if (pointer?.mode === 'shape') {
-    const end = pointer.last;
+  if (pointer?.mode === 'shape' || shapePlacement) {
+    const geometry = shapePlacement ? sizedShapeGeometry() : { start: pointer.start, end: pointer.last }, start = geometry.start, end = geometry.end;
     ctx.fillStyle = '#d6b77822'; ctx.strokeStyle = '#e2c78f';
-    for (const [x, y] of shapeCells(pointer.start.x, pointer.start.y, end.x, end.y, pointer.shapeType, pointer.outline)) {
+    for (const [x, y] of patternAnchors(shapeCells(start.x, start.y, end.x, end.y, pointer?.shapeType || shapeType, pointer?.outline ?? shapeOutline), rotatedFootprint(footprint(tiles.get(selected)), rotation))) {
       if (x < minX || x >= maxX || y < minY || y >= maxY) continue;
-      if (px >= 8) drawTile(ctx, selected, x * px, y * px, px, rotation, flip, .5); ctx.fillRect(x * px, y * px, px, px);
+      if (px >= 8) drawStamp(ctx, selected, x * px, y * px, px, rotation, flip, .5); ctx.fillRect(x * px, y * px, px, px);
     }
   } else if (pointer?.mode === 'selection-rect' && hover) {
     const x = Math.min(pointer.start.x, hover.x), y = Math.min(pointer.start.y, hover.y), rw = Math.abs(pointer.start.x - hover.x) + 1, rh = Math.abs(pointer.start.y - hover.y) + 1;
     ctx.fillStyle = '#d6b77840'; ctx.fillRect(x * px, y * px, rw * px, rh * px); ctx.strokeStyle = '#e2c78f'; ctx.strokeRect(x * px, y * px, rw * px, rh * px);
   } else if (hover && inBounds(map, hover.x, hover.y) && !spaceHeld && tool !== 'select' && tool !== 'move-map') {
-    const span = 1, start = 0;
-    if (['brush', 'fill'].includes(tool) && !pointer && !map.layers[layerIndex].locked && map.layers[layerIndex].visible) for (let y = start; y < start + span; y++) for (let x = start; x < start + span; x++) drawTile(ctx, selected, (hover.x + x) * px, (hover.y + y) * px, px, rotation, flip, .48 * (map.layers[layerIndex].opacity ?? 1));
+    const size = tool === 'eraser' ? [1,1] : rotatedFootprint(footprint(tiles.get(selected)), rotation), start = 0;
+    if (['brush', 'fill'].includes(tool) && !pointer && !map.layers[layerIndex].locked && map.layers[layerIndex].visible) drawStamp(ctx, selected, hover.x * px, hover.y * px, px, rotation, flip, .48 * (map.layers[layerIndex].opacity ?? 1));
     ctx.fillStyle = tool === 'eraser' ? '#e7a49a25' : '#d6b77812'; ctx.strokeStyle = tool === 'eraser' ? '#e7a49a' : '#e5c991';
-    ctx.fillRect((hover.x + start) * px, (hover.y + start) * px, span * px, span * px); ctx.strokeRect((hover.x + start) * px, (hover.y + start) * px, span * px, span * px);
+    ctx.fillRect((hover.x + start) * px, (hover.y + start) * px, size[0] * px, size[1] * px); ctx.strokeRect((hover.x + start) * px, (hover.y + start) * px, size[0] * px, size[1] * px);
   }
   ctx.restore(); $('zoom-reset').textContent = `${Math.round(zoom * 100)}%`;
   updateCursorStatus(); updateCursor();
@@ -404,8 +423,8 @@ function render() {
 
 function paint(point, erase = false) {
   const value = erase ? null : placement(selected, rotation, flip);
-  if (tool === 'fill' && !erase) history.fill(point.x, point.y, value);
-  else history.brush(point.x, point.y, value);
+  if (tool === 'fill' && !erase) history.fill(point.x, point.y, value, footprint(tiles.get(selected)));
+  else history.stamp(point.x, point.y, value, footprint(tiles.get(selected)));
 }
 function finishStroke(cancel = false) {
   if (!pointer) return;
@@ -436,7 +455,7 @@ function finishStroke(cancel = false) {
   }
   if (cancel) history.cancel();
   else {
-    if (active.mode === 'shape') { const end = active.last; history.shape(active.start.x, active.start.y, end.x, end.y, placement(selected, rotation, flip), active.shapeType, active.outline); }
+    if (active.mode === 'shape') { const end = active.last; history.shape(active.start.x, active.start.y, end.x, end.y, placement(selected, rotation, flip), active.shapeType, active.outline, footprint(tiles.get(selected))); }
     if (history.commit()) changed();
   }
   updateStats(); requestRender();
@@ -505,6 +524,33 @@ canvas.addEventListener('pointerup', event => { if (event.button === 0 || event.
 canvas.addEventListener('pointercancel', () => finishStroke(true));
 canvas.addEventListener('lostpointercapture', () => finishStroke(true));
 canvas.addEventListener('pointerleave', () => { if (!pointer) { hover = null; $('cursor-status').textContent = ''; } requestRender(); });
+function sizedShapeGeometry() {
+  const width = Math.max(1, Math.min(200, Number($('shape-width').value) || 1)), height = shapeType === 'circle' ? width : Math.max(1, Math.min(200, Number($('shape-height').value) || 1));
+  const start = { x: shapePlacement.x - Math.floor(width/2), y: shapePlacement.y - Math.floor(height/2) };
+  return { start, end: { x: start.x+width-1, y: start.y+height-1 } };
+}
+canvas.addEventListener('contextmenu', event => {
+  if (tool !== 'shape' || !map || !tiles.has(selected)) return;
+  event.preventDefault(); event.stopPropagation(); finishStroke(true);
+  const point = eventPoint(event), layer = map.layers[layerIndex];
+  if (!inBounds(map, point.x, point.y) || layer.locked || !layer.visible || layer.opacity === 0 || !canEditProject()) return;
+  shapePlacement = point; shapeMenu.close();
+  $('shape-size-title').textContent = `${shapeType[0].toUpperCase()+shapeType.slice(1)} size`;
+  $('shape-height').disabled = shapeType === 'circle'; if (shapeType === 'circle') $('shape-height').value = $('shape-width').value;
+  const dialog = $('shape-size-dialog'); dialog.showModal();
+  dialog.style.left = `${Math.max(8,Math.min(innerWidth-dialog.offsetWidth-8,event.clientX+12))}px`;
+  dialog.style.top = `${Math.max(8,Math.min(innerHeight-dialog.offsetHeight-8,event.clientY+12))}px`;
+  $('shape-width').focus(); $('shape-width').select(); requestRender();
+});
+for (const input of [$('shape-width'),$('shape-height')]) input.addEventListener('input', () => { if (shapeType === 'circle') $('shape-height').value = $('shape-width').value; requestRender(); });
+$('shape-size-dialog').addEventListener('close', () => { shapePlacement = null; requestRender(); });
+$('shape-size-form').onsubmit = event => {
+  event.preventDefault(); if (!shapePlacement) return;
+  const {start,end} = sizedShapeGeometry();
+  if (!inBounds(map,start.x,start.y) || !inBounds(map,end.x,end.y)) { notify('This shape would leave the map. Reduce its size or choose a point farther inside.',true); return; }
+  history.begin(layerIndex); history.shape(start.x,start.y,end.x,end.y,placement(selected,rotation,flip),shapeType,shapeOutline,footprint(tiles.get(selected)));
+  if (history.commit()) changed(); $('shape-size-dialog').close();
+};
 viewport.addEventListener('wheel', event => { event.preventDefault(); if (!map) return; const point = eventPoint(event); zoomAt(Math.exp(-event.deltaY * .0015), point.px, point.py); }, { passive: false });
 window.addEventListener('blur', () => { spaceHeld = false; finishStroke(); });
 
@@ -515,8 +561,9 @@ async function openMapFile(file) {
   const candidate = validateMap(JSON.parse(await file.text()), builtinTiles.map(tile => tile.id));
   await installMap(candidate); notify('Map opened.');
 }
+function managedOrActivePackId() { return $('tileset-manager-dialog').open ? managingPackId : activePack; }
 function openImport(keepImages = false) {
-  const pack = availableCustomPacks().find(pack => pack.id === activePack);
+  const pack = availableCustomPacks().find(pack => pack.id === managedOrActivePackId());
   if (!pack) { notify('Create or select a custom tileset first.'); return; }
   if (importCount(pack) >= policy.maxImports) { notify(`Free allows 2 image imports per tileset. ${FREE_UPGRADE}`, true); return; }
   finishStroke(); importTargetId = pack.id;
@@ -538,8 +585,37 @@ function hasVisiblePixels(image, [x, y, width, height]) {
   for (let py = y; py < y + height; py++) for (let px = x; px < x + width; px++) if (image.pixels[(py * image.width + px) * 4 + 3]) return true;
   return false;
 }
-function sheetRects() { const first = importImages[0]; if (!first) return []; const width = Number($('tile-width').value), height = Number($('tile-height').value); assertTileSetup(policy, width, height); return sliceSheet(first.width, first.height, width, height, Number($('tile-spacing').value), Number($('tile-margin').value)).filter(rect => hasVisiblePixels(first, rect)); }
+function sheetBrushes() {
+  const first = importImages[0]; if (!first) return [];
+  const width = Number($('tile-width').value), height = Number($('tile-height').value), gap = Number($('tile-spacing').value), margin = Number($('tile-margin').value);
+  assertTileSetup(policy, width, height); sliceSheet(first.width, first.height, width, height, gap, margin);
+  return sheetEntries(first.width, first.height, width, height, gap, margin, importRegions).filter(entry => hasVisiblePixels(first, entry.rect));
+}
+function importRegion(a, b) { return [Math.min(a.x,b.x), Math.min(a.y,b.y), Math.abs(a.x-b.x)+1, Math.abs(a.y-b.y)+1]; }
+function importCell(event) {
+  const first = importImages[0]; if (!first) return null;
+  const bounds = $('sheet-preview').getBoundingClientRect(), cw = Number($('tile-width').value), ch = Number($('tile-height').value), gap = Number($('tile-spacing').value), margin = Number($('tile-margin').value);
+  const cols = Math.floor((first.width-2*margin+gap)/(cw+gap)), rows = Math.floor((first.height-2*margin+gap)/(ch+gap));
+  if (cols < 1 || rows < 1) return null;
+  return { x: Math.max(0,Math.min(cols-1,Math.floor(((event.clientX-bounds.left)*first.width/bounds.width-margin)/(cw+gap)))), y: Math.max(0,Math.min(rows-1,Math.floor(((event.clientY-bounds.top)*first.height/bounds.height-margin)/(ch+gap)))) };
+}
+$('sheet-preview').addEventListener('pointerdown', event => {
+  if (event.button !== 0 || document.querySelector('input[name=mode]:checked').value !== 'sheet') return;
+  const point = importCell(event); if (!point) return;
+  event.preventDefault(); importDrag = { start: point, last: point }; $('sheet-preview').setPointerCapture(event.pointerId); updateImportPreview();
+});
+$('sheet-preview').addEventListener('pointermove', event => { if (importDrag) { importDrag.last = importCell(event) || importDrag.last; updateImportPreview(); } });
+$('sheet-preview').addEventListener('pointerup', event => {
+  if (!importDrag) return;
+  const [x,y,w,h] = importRegion(importDrag.start, importCell(event) || importDrag.last);
+  importRegions = importRegions.filter(([rx,ry,rw,rh]) => !(x < rx+rw && x+w > rx && y < ry+rh && y+h > ry));
+  if (w > 1 || h > 1) importRegions.push([x,y,w,h]);
+  importDrag = null; updateImportPreview();
+});
+for (const event of ['pointercancel','lostpointercapture']) $('sheet-preview').addEventListener(event, () => { if (importDrag) { importDrag = null; updateImportPreview(); } });
 function updateImportPreview() {
+  const key = JSON.stringify([importGeneration, $('tile-width').value, $('tile-height').value, $('tile-spacing').value, $('tile-margin').value, document.querySelector('input[name=mode]:checked').value]);
+  if (key !== importLayoutKey) { importRegions = []; importDrag = null; importLayoutKey = key; }
   if (policy.edition === 'web') document.querySelector('input[name=mode][value=sheet]').checked = true;
   const sheetMode = document.querySelector('input[name=mode]:checked').value === 'sheet'; $('sheet-fields').hidden = !sheetMode;
   for (const input of $('sheet-fields').querySelectorAll('input')) input.disabled = !sheetMode;
@@ -551,9 +627,13 @@ function updateImportPreview() {
   context.drawImage(first.image, 0, 0, preview.width, preview.height);
   try {
     if (sheetMode && importImages.length !== 1) throw new Error('Choose one image for a sprite sheet, or switch to Individual tiles.');
-    const rects = sheetMode ? sheetRects() : [];
+    const entries = sheetMode ? sheetBrushes() : [], rects = entries.map(entry => entry.rect);
+    $('group-tiles-hint').hidden = !sheetMode;
     context.strokeStyle = '#e3ad49'; context.lineWidth = 1;
     for (const [x, y, w, h] of rects) context.strokeRect(x * scale, y * scale, w * scale, h * scale);
+    context.fillStyle = '#8bc3d440'; context.strokeStyle = '#a8e3ef'; context.lineWidth = 2;
+    for (const entry of entries.filter(entry => entry.footprint)) { const [x,y,w,h]=entry.rect; context.fillRect(x*scale,y*scale,w*scale,h*scale); context.strokeRect(x*scale,y*scale,w*scale,h*scale); }
+    if (importDrag) { const [x,y,w,h] = importRegion(importDrag.start,importDrag.last), cw=Number($('tile-width').value), ch=Number($('tile-height').value), gap=Number($('tile-spacing').value), margin=Number($('tile-margin').value); context.strokeRect((margin+x*(cw+gap))*scale,(margin+y*(ch+gap))*scale,(w*cw+(w-1)*gap)*scale,(h*ch+(h-1)*gap)*scale); }
     const count = sheetMode ? rects.length : importImages.filter(image => hasVisiblePixels(image, [0, 0, image.width, image.height])).length;
     const cropped = first.originalWidth > first.width || first.originalHeight > first.height;
     $('import-status').textContent = `${count} tile brushes · ${first.width} × ${first.height} px${cropped ? ` · top-left cropped from ${first.originalWidth} × ${first.originalHeight} px` : !sheetMode && count > 1 ? ' (first image shown)' : ''}`;
@@ -567,7 +647,7 @@ async function importPack() {
   const target = availableCustomPacks().find(pack => pack.id === importTargetId); if (!target) throw new Error('Select a custom tileset first.');
   const id = `custom-${crypto.randomUUID()}`, name = target.name;
   const pack = { id, name, images: importImages.map((image, i) => ({ id: `image-${i}`, data: image.data, width: image.width, height: image.height })), tiles: [] };
-  if (sheetMode) pack.tiles = sheetRects().map((rect, i) => ({ id: `${id}:${i}`, name: `${name} ${String(target.tiles.length + i + 1).padStart(3, '0')}`, category: 'Custom', image: 'image-0', rect, pixelArt: true }));
+  if (sheetMode) pack.tiles = sheetBrushes().map((entry, i) => ({ id: `${id}:${i}`, name: `${name} ${String(target.tiles.length + i + 1).padStart(3, '0')}`, category: 'Custom', image: 'image-0', ...entry, pixelArt: true }));
   else pack.tiles = importImages.flatMap((image, i) => hasVisiblePixels(image, [0, 0, image.width, image.height]) ? [{ id: `${id}:${i}`, name: image.name, category: 'Custom', image: `image-${i}`, rect: [0, 0, image.width, image.height], pixelArt: true }] : []);
   if (!pack.tiles.length) throw new Error('No visible tiles found. Fully transparent tiles are skipped.');
   const usedImages = new Set(pack.tiles.map(tile => tile.image)); pack.images = pack.images.filter(image => usedImages.has(image.id));
@@ -580,7 +660,7 @@ async function appendPack(pack, importName = pack.name) {
   if (!target) throw new Error('Select a custom tileset first.');
   const incoming = exportablePack(validateMap({ ...createMap(4, 4), packs: [pack] }).packs[0]);
   if (policy.edition === 'web') {
-    for (const tile of incoming.tiles) assertTileSetup(policy, tile.rect[2], tile.rect[3]);
+    for (const tile of incoming.tiles) assertTileSetup(policy, ...baseTileSize(tile));
     const probes = new Map();
     for (const image of incoming.images) {
       let loaded = await loadImage(image.data); if (loaded.width !== image.width || loaded.height !== image.height) throw new Error('An embedded image does not match its declared dimensions.');
@@ -606,7 +686,7 @@ async function appendPack(pack, importName = pack.name) {
   renderPacks(); renderCategories(); renderPalette(); updateBrush(); setTool('brush'); changed();
 }
 function savePack() {
-  const pack = libraryPacks(map).find(pack => pack.id === activePack) || libraryPacks(map).find(pack => pack.id === tiles.get(selected)?.packId);
+  const pack = libraryPacks(map).find(pack => pack.id === managedOrActivePackId()) || libraryPacks(map).find(pack => pack.id === tiles.get(selected)?.packId);
   if (!pack) { notify('Select a custom tile or custom pack first.'); return; }
   jsonDownload({ format: 'vtt-brush-pack', version: 1, pack: exportablePack(pack) }, `${safeName(pack.name)}.brushpack.json`); notify('Brush pack exported for reuse in other maps.');
 }
@@ -652,7 +732,7 @@ function renderRegion(startX, startY, width, height, pixels, options) {
   for (const layer of map.layers) if (layer.visible) {
     context.save(); context.globalAlpha *= layer.opacity ?? 1;
     for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
-    const cell = layer.cells[(startY + y) * map.width + startX + x]; if (cell) drawTile(context, cell.tile, x * pixels, y * pixels, pixels, cell.rotation, cell.flip);
+    const cell = layer.cells[(startY + y) * map.width + startX + x]; if (cell) drawTile(context, cell.tile, x * pixels, y * pixels, pixels, cell.rotation, cell.flip, 1, cell.part);
     }
     context.restore();
   }
@@ -709,12 +789,12 @@ $('print-form').onsubmit = async event => {
   try { saveExportSettings(); const blob = await printPDF(map, renderRegion, (current, total) => button.textContent = `Page ${current}/${total}`); download(blob, `${safeName(map.name)}-print.pdf`); $('print-dialog').close(); }
   catch (error) { showError(error); } finally { button.disabled = false; button.textContent = 'Download PDF'; }
 };
-function openRename() { const pack = packs.find(pack => pack.id === activePack); if (!pack) return; $('pack-name').value = map.packNames[pack.id] || pack.name.replace('Kenney · ', ''); $('rename-dialog').showModal(); }
+function openRename() { const pack = packs.find(pack => pack.id === managedOrActivePackId()); if (!pack) return; renamingPackId = pack.id; $('pack-name').value = map.packNames[pack.id] || pack.name.replace('Kenney · ', ''); $('rename-dialog').showModal(); }
 $('rename-tileset').onclick = openRename;
 $('pack-select').addEventListener('keydown', event => { if (event.key === 'F2') { event.preventDefault(); openRename(); } });
 $('rename-form').onsubmit = event => {
   event.preventDefault(); const name = $('pack-name').value.trim(); if (!name) return;
-  const pack = packs.find(pack => pack.id === activePack); if (!pack) return;
+  const pack = packs.find(pack => pack.id === renamingPackId); if (!pack) return;
   if (builtinPacks.some(item => item.id === pack.id)) map.packNames[pack.id] = name;
   else history.snapshot(() => { pack.name = name; }, { includePacks: true });
   publishLibrary(libraryFromProject(sharedLibrary, map));
@@ -728,7 +808,7 @@ function confirmPackDeletion(pack) {
   $('delete-pack-warning').textContent = pack.optional ? `Delete “${map.packNames[pack.id] || pack.name.replace('Kenney · ', '')}” from your library? Placed tiles will stay on your maps. You can add this set again from Free Tilesets.` : `Remove “${pack.name}” from the library? Tiles already placed on the map will stay. Undo restores the tileset to the library.`;
   $('delete-pack-dialog').showModal();
 }
-$('delete-pack').onclick = () => confirmPackDeletion(libraryPacks(map).find(pack => pack.id === activePack));
+$('delete-pack').onclick = () => confirmPackDeletion(libraryPacks(map).find(pack => pack.id === managedOrActivePackId()));
 $('delete-pack-form').onsubmit = event => {
   event.preventDefault(); const id = deletingPackId; deletingPackId = null; $('delete-pack-dialog').close();
   if (builtinPacks.some(pack => pack.id === id && pack.optional)) {
@@ -761,7 +841,6 @@ function renderTilesetManager() {
   const pack = packs.find(pack => pack.id === managingPackId) || availableCustomPacks()[0] || packs.find(pack => pack.id === activePack) || enabledBuiltins()[0];
   if (!pack) return;
   managingPackId = pack.id;
-  if (activePack !== pack.id) { choosePack(pack.id, true); return; }
   const custom = availableCustomPacks().some(item => item.id === pack.id), removable = custom, name = map.packNames[pack.id] || pack.name.replace('Kenney · ', '');
   $('managed-tileset-name').textContent = name;
   $('managed-tileset-actions').hidden = !custom; $('managed-imports').hidden = !custom; $('managed-tileset-delete').hidden = !removable; $('default-tileset-note').hidden = custom;
@@ -781,13 +860,13 @@ function renderTilesetManager() {
     const heading = document.createElement('h3'); heading.className = 'tileset-list-heading'; heading.textContent = label; $('managed-tilesets').append(heading);
     for (const item of items) {
       const button = document.createElement('button'); button.type = 'button'; button.className = 'tileset-list-item'; button.textContent = map.packNames[item.id] || item.name.replace('Kenney · ', ''); button.setAttribute('aria-pressed', item.id === pack.id); button.classList.toggle('active', item.id === pack.id);
-      button.onclick = () => { managingPackId = item.id; choosePack(item.id, true); $('managed-tilesets').querySelector('[aria-pressed=true]')?.focus({ preventScroll: true }); };
+      button.onclick = () => { managingPackId = item.id; renderTilesetManager(); $('managed-tilesets').querySelector('[aria-pressed=true]')?.focus({ preventScroll: true }); };
       $('managed-tilesets').append(button);
     }
   }
   renderImports();
 }
-$('manage-tilesets').onclick = () => { finishStroke(); managingPackId = packs.some(pack => pack.id === activePack) ? activePack : availableCustomPacks()[0]?.id || enabledBuiltins()[0]?.id; if (activePack !== managingPackId) choosePack(managingPackId, true); renderTilesetManager(); $('tileset-manager-dialog').showModal(); };
+$('manage-tilesets').onclick = () => { finishStroke(); managingPackId = packs.some(pack => pack.id === activePack) ? activePack : availableCustomPacks()[0]?.id || enabledBuiltins()[0]?.id; renderTilesetManager(); $('tileset-manager-dialog').showModal(); };
 $('delete-import-form').onsubmit = event => {
   event.preventDefault(); const pending = deletingImport; deletingImport = null; $('delete-import-dialog').close();
   if (pending && deleteImport(history, pending.packId, pending.importId)) gridChanged();
@@ -833,16 +912,16 @@ $('save-pack').onclick = savePack;
 function renderFreeTilesets() {
   for (const button of document.querySelectorAll('[data-kenney-pack]')) {
     const id = button.dataset.kenneyPack, added = sharedLibrary.enabledOptional.includes(id), name = id === 'kenney-scribble' ? 'Scribble' : 'Tiny Dungeon';
-    button.textContent = added ? 'Delete' : 'Add ' + name; button.dataset.action = added ? 'delete' : 'add'; button.classList.toggle('danger', added);
+    button.textContent = added ? '×' : '+'; button.title = (added ? 'Delete ' : 'Add ') + name; button.dataset.action = added ? 'delete' : 'add'; button.classList.toggle('danger', added);
     button.setAttribute('aria-label', (added ? 'Delete ' : 'Add ') + name);
   }
 }
-$('free-tilesets').onclick = () => { finishStroke(); renderFreeTilesets(); $('kenney-import').open = false; $('kenney-dialog').showModal(); };
+$('free-tilesets').onclick = () => { finishStroke(); renderFreeTilesets(); $('kenney-dialog').showModal(); };
 for (const button of document.querySelectorAll('[data-kenney-pack]')) button.onclick = () => {
   const pack = builtinPacks.find(pack => pack.id === button.dataset.kenneyPack && pack.collection === 'kenney'); if (!pack) return;
   if (sharedLibrary.enabledOptional.includes(pack.id)) { confirmPackDeletion(pack); return; }
   publishLibrary({ ...sharedLibrary, enabledOptional: [...sharedLibrary.enabledOptional, pack.id] });
-  activePack = managingPackId = pack.id; rebuildLibrary(); choosePack(pack.id, true); renderFreeTilesets(); changed();
+  managingPackId = pack.id; rebuildLibrary(); renderFreeTilesets(); changed();
 };
 $('backup-library').onclick = () => jsonDownload(sharedLibrary, 'trials-library.json');
 $('restore-library').onclick = () => $('library-file').click();

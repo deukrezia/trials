@@ -42,7 +42,7 @@ test('Shape menu, filled/outline geometry, undo and inert right-click elsewhere'
     await choose('triangle'); await drag(1, 1, 5, 5); data = await saved(); assert.equal(data.layers[0].cells.slice(50, 60).filter(Boolean).length, 5); await page.locator('#undo').click();
     await choose('line'); await drag(1, 1, 5, 5); const before = await saved(); assert.equal(occupied(before), 5);
     for (const name of ['Select', 'Paint', 'Erase', 'Flood fill', 'Shape', 'Pick tile', 'Move map']) {
-      await page.getByRole('button', { name, exact: true }).click(); await drag(1, 1, 5, 5, 'right'); assert.deepEqual(await saved(), before, `${name} right-drag altered map`); assert.equal(await page.locator('#shape-menu').isVisible(), false);
+      await page.getByRole('button', { name, exact: true }).click(); await drag(1, 1, 5, 5, 'right'); if (name === 'Shape') { assert.equal(await page.locator('#shape-size-dialog').isVisible(),true); await page.keyboard.press('Escape'); } assert.deepEqual(await saved(), before, `${name} right-drag altered map`); assert.equal(await page.locator('#shape-menu').isVisible(), false);
     }
     await page.locator('#pack-select').click({ button: 'right' }); assert.equal(await page.locator('#rename-dialog').isVisible(), false);
     await page.locator('#pack-select').focus(); await page.keyboard.press('F2'); assert.equal(await page.locator('#rename-dialog').isVisible(), true); await page.locator('#rename-dialog').getByRole('button', { name: 'Cancel', exact: true }).click();

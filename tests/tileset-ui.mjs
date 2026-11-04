@@ -15,7 +15,6 @@ export async function addKenney(page) {
 }
 export async function openFreeTilesets(page) {
   await openTilesets(page); if (!await page.locator('#kenney-dialog').isVisible()) await page.locator('#free-tilesets').click();
-  if (await page.locator('#kenney-import').getAttribute('open') === null) await page.locator('#kenney-import summary').click();
 }
 export async function closeFreeTilesets(page) {
   if (await page.locator('#kenney-dialog').isVisible()) await page.locator('#kenney-dialog [data-close]').click();

@@ -1,9 +1,9 @@
 // A manual display unit only. No request is made without real configuration,
 // on local previews, or while the placement is hidden/offscreen.
-export function prepareAdSense(slot, ad, width, height) {
+export function prepareAdSense(slot, ad, height) {
   if (!/^ca-pub-\d{16}$/.test(ad.publisherId || '') || !/^\d{1,20}$/.test(ad.slotId || '') || location.protocol !== 'https:' || ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) return;
   const unit = document.createElement('ins'); unit.className = 'adsbygoogle';
-  unit.style.cssText = `display:inline-block;width:${width}px;height:${height}px`;
+  unit.style.cssText = `display:block;width:100%;height:${height}px`;
   unit.dataset.adClient = ad.publisherId; unit.dataset.adSlot = ad.slotId;
   slot.querySelector('.ad-frame').replaceChildren(unit); slot.dataset.state = 'ready'; slot.hidden = false;
   const status = new MutationObserver(() => {

@@ -10,9 +10,9 @@ export async function configureEdition() {
   }
   if (config.edition !== 'web' || !config.ad?.enabled) return config;
   slot.dataset.state = 'empty'; slot.hidden = !config.ad.reserveSpace;
-  const width = Math.max(120, Math.min(200, Number(config.ad.width) || 180)), height = Math.max(50, Math.min(150, Number(config.ad.height) || 150));
-  slot.style.setProperty('--ad-width', `${width}px`); slot.style.setProperty('--ad-height', `${height}px`);
-  if (config.ad.provider === 'adsense') { prepareAdSense(slot, config.ad, width, height); return config; }
+  const height = Math.max(50, Math.min(150, Number(config.ad.height) || 150));
+  slot.style.setProperty('--ad-height', `${height}px`);
+  if (config.ad.provider === 'adsense') { prepareAdSense(slot, config.ad, height); return config; }
   if (!config.ad.imageUrl || !config.ad.targetUrl) return config;
   const imageUrl = new URL(config.ad.imageUrl, document.baseURI), targetUrl = new URL(config.ad.targetUrl);
   if ((imageUrl.origin !== location.origin && imageUrl.protocol !== 'https:') || targetUrl.protocol !== 'https:') return config;

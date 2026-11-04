@@ -1,3 +1,4 @@
+import { stampParts, expandInstances, patternAnchors, rotatedFootprint, baseTileSize } from './multi-tile.js';
 export const FORMAT = 'vtt-map-maker';
 export const VERSION = 1;
 export const MAX_CELLS = 40000;
@@ -12,7 +13,7 @@ export function createMap(width = 40, height = 30, name = 'Untitled dungeon') {
   return { format: FORMAT, version: VERSION, name, width, height, seed: Date.now(), background: '#383d39', packs: [], packNames: {}, packDescriptions: {}, settings: defaultSettings(), layers: ['Ground', 'Walls', 'Objects'].map((name, i) => ({ id: `layer-${i}`, name, visible: true, locked: false, opacity: 1, cells: Array(width * height).fill(null) })) };
 }
 
-export function sameTile(a, b) { return a === b || (!!a && !!b && a.tile === b.tile && a.rotation === b.rotation && a.flip === b.flip); }
+export function sameTile(a, b) { return a === b || (!!a && !!b && a.tile === b.tile && a.rotation === b.rotation && a.flip === b.flip && a.instance === b.instance && JSON.stringify(a.part) === JSON.stringify(b.part)); }
 export function inBounds(map, x, y) { return x >= 0 && y >= 0 && x < map.width && y < map.height; }
 export function placement(tile, rotation = 0, flip = false) { return tile ? { tile, rotation: ((rotation % 4) + 4) % 4, flip: !!flip } : null; }
 export function* line(x0, y0, x1, y1) {
@@ -63,9 +64,25 @@ export class History {
     if (layer.locked || !layer.visible) return;
     const index = y * this.map.width + x;
     if (sameTile(layer.cells[index], value)) return;
+    const old = layer.cells[index];
+    if (old?.instance && old.instance !== value?.instance) layer.cells.forEach((cell, i) => { if (cell?.instance === old.instance) this.write(i, null); });
+    this.write(index, value);
+  }
+  write(index, value) {
+    const layer = this.map.layers[this.pending.layerIndex];
     if (!this.pending.changes.has(index)) this.pending.changes.set(index, { before: clone(layer.cells[index]), after: null });
     layer.cells[index] = clone(value);
     this.pending.changes.get(index).after = clone(value);
+  }
+  stamp(x, y, value, size = [1, 1]) {
+    if (!this.pending) return;
+    if (!value) { this.set(x, y, null); return; }
+    const parts = stampParts(value, size);
+    if (parts.some(part => !inBounds(this.map, x + part.x, y + part.y))) return;
+    const layer = this.map.layers[this.pending.layerIndex];
+    const current = layer.cells[y * this.map.width + x];
+    if (parts.every(part => { const cell = layer.cells[(y + part.y) * this.map.width + x + part.x]; return sameTile(cell, { ...part.cell, ...(part.cell.instance ? { instance: current?.instance } : {}) }); })) return;
+    for (const part of parts) this.set(x + part.x, y + part.y, part.cell);
   }
   brush(x, y, value, size = 1) {
     const start = -Math.floor((size - 1) / 2);
@@ -74,23 +91,25 @@ export class History {
   rectangle(x0, y0, x1, y1, value) {
     for (let y = Math.max(0, Math.min(y0, y1)); y <= Math.min(this.map.height - 1, Math.max(y0, y1)); y++) for (let x = Math.max(0, Math.min(x0, x1)); x <= Math.min(this.map.width - 1, Math.max(x0, x1)); x++) this.set(x, y, value);
   }
-  shape(x0, y0, x1, y1, value, type = 'rectangle', outline = false) {
-    for (const [x, y] of shapeCells(x0, y0, x1, y1, type, outline)) this.set(x, y, value);
+  shape(x0, y0, x1, y1, value, type = 'rectangle', outline = false, size = [1, 1]) {
+    for (const [x, y] of patternAnchors(shapeCells(x0, y0, x1, y1, type, outline), rotatedFootprint(size, value?.rotation || 0))) this.stamp(x, y, value, size);
   }
-  fill(x, y, value) {
+  fill(x, y, value, size = [1, 1]) {
     if (!this.pending || !inBounds(this.map, x, y)) return;
     const cells = this.map.layers[this.pending.layerIndex].cells;
     const target = clone(cells[y * this.map.width + x]);
     if (sameTile(target, value)) return;
-    const visited = new Set(), queue = [[x, y]];
+    const visited = new Set(), queue = [[x, y]], region = [];
+    const matches = cell => cell === target || (!!cell && !!target && cell.tile === target.tile && cell.rotation === target.rotation && cell.flip === target.flip);
     for (let head = 0; head < queue.length; head++) {
       const [cx, cy] = queue[head], index = cy * this.map.width + cx;
       if (!inBounds(this.map, cx, cy) || visited.has(index)) continue;
       visited.add(index);
-      if (!sameTile(cells[index], target)) continue;
-      this.set(cx, cy, value);
+      if (!matches(cells[index])) continue;
+      region.push([cx, cy]);
       queue.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]);
     }
+    for (const [cx, cy] of patternAnchors(region, rotatedFootprint(size, value?.rotation || 0))) this.stamp(cx, cy, value, size);
   }
   commit() {
     if (!this.pending) return false;
@@ -175,7 +194,7 @@ export function setLayerState(history, id, changes) {
 export function selectionInRect(map, layerIndex, x0, y0, x1, y1) {
   const result = [];
   for (let y = Math.max(0, Math.min(y0, y1)); y <= Math.min(map.height - 1, Math.max(y0, y1)); y++) for (let x = Math.max(0, Math.min(x0, x1)); x <= Math.min(map.width - 1, Math.max(x0, x1)); x++) if (map.layers[layerIndex].cells[y * map.width + x]) result.push(y * map.width + x);
-  return result;
+  return expandInstances([map.layers[layerIndex]], result);
 }
 export function selectionBounds(map, indices) {
   const valid = [...indices].filter(i => Number.isInteger(i) && i >= 0 && i < map.width * map.height);
@@ -190,22 +209,22 @@ export function transformSelection(history, layerIndex, indices, operation, dx =
 export function selectionInLayers(map, layerIds, x0, y0, x1, y1) {
   const selected = new Set(layerIds), indices = new Set();
   map.layers.forEach((layer, i) => { if (selected.has(layer.id) && layer.visible && layer.opacity !== 0 && !layer.locked) for (const index of selectionInRect(map, i, x0, y0, x1, y1)) indices.add(index); });
-  return [...indices];
+  return expandInstances(map.layers.filter(layer => selected.has(layer.id) && layer.visible && layer.opacity !== 0 && !layer.locked), indices);
 }
 export function transformLayersSelection(history, layerIds, indices, operation, dx = 0, dy = 0) {
   const map = history.map, selected = new Set(layerIds), layers = map.layers.filter(layer => selected.has(layer.id) && layer.visible && layer.opacity !== 0 && !layer.locked);
   if (!layers.length) throw new Error('Select an unlocked, visible layer.');
-  const active = [...new Set(indices)].filter(i => Number.isInteger(i) && i >= 0 && i < map.width * map.height && layers.some(layer => layer.cells[i]));
+  const active = expandInstances(layers, indices).filter(i => Number.isInteger(i) && i >= 0 && i < map.width * map.height && layers.some(layer => layer.cells[i]));
   const bounds = selectionBounds(map, active); if (!bounds) return [];
   if (!['move', 'rotate', 'flip', 'delete'].includes(operation) || !Number.isInteger(dx) || !Number.isInteger(dy)) throw new Error('Invalid selection transform.');
   const edits = layers.map(layer => ({ layer, active: active.filter(i => layer.cells[i]), transformed: operation === 'delete' ? [] : active.filter(i => layer.cells[i]).map(i => {
     const x = i % map.width - bounds.x, y = Math.floor(i / map.width) - bounds.y, cell = layer.cells[i];
-    if (operation === 'rotate') return { x: bounds.x + bounds.height - 1 - y, y: bounds.y + x, cell: placement(cell.tile, cell.rotation + 1, cell.flip) };
-    if (operation === 'flip') return { x: bounds.x + bounds.width - 1 - x, y: bounds.y + y, cell: placement(cell.tile, -cell.rotation, !cell.flip) };
+    if (operation === 'rotate') return { x: bounds.x + bounds.height - 1 - y, y: bounds.y + x, cell: { ...clone(cell), ...placement(cell.tile, cell.rotation + 1, cell.flip) } };
+    if (operation === 'flip') return { x: bounds.x + bounds.width - 1 - x, y: bounds.y + y, cell: { ...clone(cell), ...placement(cell.tile, -cell.rotation, !cell.flip) } };
     return { x: bounds.x + x + dx, y: bounds.y + y + dy, cell: clone(cell) };
   }) }));
   if (edits.some(edit => edit.transformed.some(cell => !inBounds(map, cell.x, cell.y)))) throw new Error('The selection would leave the map. Enlarge the map or move it inward first.');
-  history.snapshot(() => { for (const edit of edits) { for (const i of edit.active) edit.layer.cells[i] = null; for (const cell of edit.transformed) edit.layer.cells[cell.y * map.width + cell.x] = clone(cell.cell); } });
+  history.snapshot(() => { for (const edit of edits) { for (const i of edit.active) edit.layer.cells[i] = null; const hit = new Set(edit.transformed.map(cell => edit.layer.cells[cell.y * map.width + cell.x]?.instance).filter(Boolean)); edit.layer.cells.forEach((cell, i) => { if (cell?.instance && hit.has(cell.instance)) edit.layer.cells[i] = null; }); for (const cell of edit.transformed) edit.layer.cells[cell.y * map.width + cell.x] = clone(cell.cell); } });
   return [...new Set(edits.flatMap(edit => edit.transformed.map(cell => cell.y * map.width + cell.x)))];
 }
 export function resizeOffset(map, width, height, anchor = 'top-left') {
@@ -349,7 +368,10 @@ export function validateMap(input, builtinIds = []) {
       if (x < 0 || y < 0 || w < 1 || h < 1 || x + w > source.width || y + h > source.height) throw new Error('Tile rectangle falls outside its image.');
       if (tile.pixelArt !== undefined && typeof tile.pixelArt !== 'boolean') throw new Error('Invalid tile rendering preference.');
       if (tile.hidden !== undefined && typeof tile.hidden !== 'boolean') throw new Error('Invalid brush visibility.');
-      ids.add(tile.id); return { id: tile.id, name: tile.name, image: tile.image, category: 'Custom', rect: [...tile.rect], ...(tile.pixelArt !== undefined ? { pixelArt: tile.pixelArt } : {}), ...(tile.hidden !== undefined ? { hidden: tile.hidden } : {}) };
+      if (tile.footprint !== undefined && (!Array.isArray(tile.footprint) || tile.footprint.length !== 2 || !tile.footprint.every(n => Number.isInteger(n) && n >= 1 && n <= 200))) throw new Error('Invalid tile footprint.');
+      if (tile.cellSpacing !== undefined && (!Number.isInteger(tile.cellSpacing) || tile.cellSpacing < 0 || tile.cellSpacing > 1024)) throw new Error('Invalid tile spacing.');
+      if (!baseTileSize(tile).every(n => Number.isInteger(n) && n > 0)) throw new Error('Tile image must align with its base grid.');
+      ids.add(tile.id); return { id: tile.id, name: tile.name, image: tile.image, category: 'Custom', rect: [...tile.rect], ...(tile.footprint ? { footprint: [...tile.footprint] } : {}), ...(tile.cellSpacing ? { cellSpacing: tile.cellSpacing } : {}), ...(tile.pixelArt !== undefined ? { pixelArt: tile.pixelArt } : {}), ...(tile.hidden !== undefined ? { hidden: tile.hidden } : {}) };
     });
     let imports;
     if (pack.imports !== undefined) {
@@ -375,6 +397,12 @@ export function validateMap(input, builtinIds = []) {
     return { id, name, visible: layer.visible, locked: layer.locked, opacity, cells: layer.cells.map(cell => {
       if (cell === null) return null;
       if (!cell || !ids.has(cell.tile) || !Number.isInteger(cell.rotation) || cell.rotation < 0 || cell.rotation > 3 || typeof cell.flip !== 'boolean') throw new Error('The map contains an invalid or missing tile.');
+      if (cell.part !== undefined || cell.instance !== undefined) {
+        if (typeof cell.instance !== 'string' || !cell.instance || cell.instance.length > 100 || !Array.isArray(cell.part) || cell.part.length !== 4 || !cell.part.every(Number.isInteger)) throw new Error('Invalid large tile placement.');
+        const [x, y, w, h] = cell.part;
+        if (w < 1 || h < 1 || w > 200 || h > 200 || x < 0 || y < 0 || x >= w || y >= h) throw new Error('Invalid large tile source cell.');
+        return { ...placement(cell.tile, cell.rotation, cell.flip), instance: cell.instance, part: [...cell.part] };
+      }
       return placement(cell.tile, cell.rotation, cell.flip);
     }) };
   });
