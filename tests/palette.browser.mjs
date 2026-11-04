@@ -6,7 +6,7 @@ import { once } from 'node:events';
 import { readFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { createMap, placement } from '../src/model.js';
-import { openTilesets, closeTilesets, addKenney } from './tileset-ui.mjs';
+import { openTilesets, closeTilesets, addKenney, openFreeTilesets } from './tileset-ui.mjs';
 
 test('palette organization, contextual edition details and removable optional Kenney sets', { timeout: 120000 }, async () => {
   const root = fileURLToPath(new URL('../', import.meta.url));
@@ -27,7 +27,7 @@ test('palette organization, contextual edition details and removable optional Ke
     const arranged = await ids(); assert.deepEqual(arranged.slice(0, 3), [original[1], original[2], original[0]]); assert.deepEqual((await saved()).layers, before.layers);
     await tile(original[0]).focus(); await page.keyboard.press('Alt+ArrowLeft'); assert.deepEqual((await ids()).slice(0, 3), [original[1], original[0], original[2]]);
     const expected = await ids();
-    await page.locator('#categories').getByRole('button', { name: 'Walls', exact: true }).click(); assert.ok((await ids()).every(id => !original.slice(0, 18).includes(id)));
+    await page.locator('#categories').getByRole('button', { name: 'Walls', exact: true }).click(); assert.deepEqual(new Set(await ids()), new Set([4, 5, 6, 7, 13, 14, 15, 22, 29, 30].map(index => `default-tiles:${index}`)));
     await page.locator('#categories').getByRole('button', { name: 'All', exact: true }).click(); assert.deepEqual(await ids(), expected);
     await page.locator('#new-map').click(); await page.locator('#new-form [name=name]').fill('Organized next project'); await page.locator('#new-form button[type=submit]').click(); await page.waitForFunction(() => document.querySelector('#map-name').value === 'Organized next project'); assert.deepEqual(await ids(), expected);
     await openTilesets(page); assert.equal(await page.locator('#free-edition-rules').textContent(), 'Free edition'); await page.locator('#free-edition-rules').click();
@@ -35,7 +35,7 @@ test('palette organization, contextual edition details and removable optional Ke
     const backupDownload = page.waitForEvent('download'); await page.locator('#backup-library').click(); const backup = JSON.parse(await readFile(await (await backupDownload).path(), 'utf8')); assert.deepEqual(backup.tileOrders['default-tiles'], expected);
     await addKenney(page); await closeTilesets(page);
     const map = createMap(4, 4, 'Retained Kenney'); map.layers[0].cells[5] = placement('kenney:tiles.png'); map.layers[2].cells[10] = placement('tiny:48'); await openMap(map);
-    await page.locator('#pack-select').selectOption('kenney-scribble'); await openTilesets(page); await page.locator('#delete-pack').click(); assert.match(await page.locator('#delete-pack-warning').textContent(), /Placed tiles will stay/);
+    await page.locator('#pack-select').selectOption('kenney-scribble'); await openFreeTilesets(page); await page.locator('[data-kenney-pack=kenney-scribble]').click(); assert.match(await page.locator('#delete-pack-warning').textContent(), /Placed tiles will stay/);
     await page.locator('#delete-pack-form button[type=submit]').click(); await closeTilesets(page);
     assert.equal(await page.locator('#pack-select option[value=kenney-scribble]').count(), 0); assert.equal(await page.locator('#pack-select option[value=kenney-tiny]').count(), 1); assert.deepEqual((await saved()).layers, map.layers);
     await page.waitForFunction(() => document.querySelector('#save-state').textContent === 'Saved locally in this browser'); await page.reload(); await page.waitForFunction(() => document.querySelector('#map-name').value === 'Retained Kenney'); assert.equal(await page.locator('#pack-select option[value=kenney-scribble]').count(), 0); assert.deepEqual((await saved()).layers, map.layers);

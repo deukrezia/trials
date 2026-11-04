@@ -12,6 +12,13 @@
     "author": null,
     "license": null,
     "attributionRequired": false,
+    "categoryGrid": [
+      "FFFFWWWW",
+      "FFFFPWWW",
+      "FFFFFFWF",
+      "PPFFFWW-",
+      "PPFPPFF-"
+    ],
     "groups": [
       { "name": "Water", "category": "Floors", "tiles": [0, 1, 2, 8, 9, 10, 16, 17, 18] },
       { "name": "Ground", "category": "Floors", "tiles": [5, 27, 4, 11, 19, 21, 23, 35, 36] },

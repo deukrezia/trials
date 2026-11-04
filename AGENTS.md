@@ -4,6 +4,7 @@
 - Do not operate native desktop controls or the user's open browser windows. Verify UI changes with isolated headless browser profiles or hidden Electron test windows.
 - Preserve the shared tileset library and placed map artwork across projects, upgrades and library removal.
 - Keep UI text concise. Avoid redundant counts, repeated selected-state labels, decorative arrows and explanatory paragraphs where contextual controls work better.
+- Kenney management must follow **Free Tilesets → Import from Kenney → Add Scribble / Add Tiny Dungeon**, with **Delete** replacing Add for installed packs and a linked Kenney/CC0 disclaimer beneath. Do not reintroduce editable tileset descriptions, checkboxes, or a bulk Add action. Removal preserves placed map art.
 
 ## Publishing changes
 

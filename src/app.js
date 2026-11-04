@@ -24,7 +24,7 @@ let customImages = new Map(), deletingPackId = null, importTargetId = null;
 let managingPackId = null, deletingImport = null;
 let draggedTileId = null, suppressTileClick = false;
 let activeLayerId = null, draggedLayerId = null, deletingLayerId = null;
-let renamingLayerId = null, describingPackId = null;
+let renamingLayerId = null;
 let selectedLayerIds = new Set(), layerAnchorId = null;
 let sharedLibrary = emptyLibrary(), libraryWrite = Promise.resolve();
 let policy = editionPolicy('web');
@@ -118,7 +118,7 @@ async function installMap(candidate) {
   pendingMapMove = null; $('move-confirm-dialog').close();
   deletingPackId = null; $('delete-pack-dialog').close();
   managingPackId = null; deletingImport = null; $('tileset-manager-dialog').close(); $('delete-import-dialog').close();
-  layerMenu.close(); deletingLayerId = null; $('delete-layer-dialog').close(); renamingLayerId = null; $('rename-layer-dialog').close(); describingPackId = null; $('description-dialog').close(); $('kenney-dialog').close();
+  layerMenu.close(); deletingLayerId = null; $('delete-layer-dialog').close(); renamingLayerId = null; $('rename-layer-dialog').close(); $('kenney-dialog').close();
   const adopted = adoptProjectLibrary(sharedLibrary, candidate);
   candidate = validateMap(projectWithLibrary(adopted, candidate), builtinTiles.map(tile => tile.id));
   const prepared = await prepareAssets(candidate);
@@ -720,21 +720,22 @@ $('rename-form').onsubmit = event => {
   publishLibrary(libraryFromProject(sharedLibrary, map));
   renderPacks(); changed(); $('rename-dialog').close();
 };
-$('delete-pack').onclick = () => {
-  finishStroke(); const pack = libraryPacks(map).find(pack => pack.id === activePack) || enabledBuiltins().find(pack => pack.id === activePack && pack.optional); if (!pack) return;
+function confirmPackDeletion(pack) {
+  finishStroke(); if (!pack) return;
   deletingPackId = pack.id;
-  $('delete-pack-title').textContent = pack.optional ? 'Remove tileset?' : 'Delete tileset?';
-  document.querySelector('#delete-pack-form button[type=submit]').textContent = pack.optional ? 'Remove tileset' : 'Delete tileset';
-  $('delete-pack-warning').textContent = pack.optional ? `Remove “${map.packNames[pack.id] || pack.name}” from your library? Placed tiles will stay on your maps. You can add this set again with Add Kenney Tilesets.` : `Remove “${pack.name}” from the library? Tiles already placed on the map will stay. Undo restores the tileset to the library.`;
+  $('delete-pack-title').textContent = 'Delete tileset?';
+  document.querySelector('#delete-pack-form button[type=submit]').textContent = 'Delete tileset';
+  $('delete-pack-warning').textContent = pack.optional ? `Delete “${map.packNames[pack.id] || pack.name.replace('Kenney · ', '')}” from your library? Placed tiles will stay on your maps. You can add this set again from Free Tilesets.` : `Remove “${pack.name}” from the library? Tiles already placed on the map will stay. Undo restores the tileset to the library.`;
   $('delete-pack-dialog').showModal();
-};
+}
+$('delete-pack').onclick = () => confirmPackDeletion(libraryPacks(map).find(pack => pack.id === activePack));
 $('delete-pack-form').onsubmit = event => {
   event.preventDefault(); const id = deletingPackId; deletingPackId = null; $('delete-pack-dialog').close();
   if (builtinPacks.some(pack => pack.id === id && pack.optional)) {
     publishLibrary({ ...sharedLibrary, enabledOptional: sharedLibrary.enabledOptional.filter(packId => packId !== id) });
-    managingPackId = null; rebuildLibrary(); updateBrush(); changed();
+    managingPackId = null; rebuildLibrary(); renderFreeTilesets(); updateBrush(); changed();
   } else if (id && deletePack(history, id)) gridChanged();
-  if ($('tileset-manager-dialog').open) $('new-tileset').focus();
+  if ($('tileset-manager-dialog').open && !$('kenney-dialog').open) $('new-tileset').focus();
 };
 $('delete-pack-dialog').addEventListener('close', () => { deletingPackId = null; });
 function renderImports() {
@@ -761,13 +762,10 @@ function renderTilesetManager() {
   if (!pack) return;
   managingPackId = pack.id;
   if (activePack !== pack.id) { choosePack(pack.id, true); return; }
-  const custom = availableCustomPacks().some(item => item.id === pack.id), removable = custom || pack.optional, name = map.packNames[pack.id] || pack.name.replace('Kenney · ', '');
+  const custom = availableCustomPacks().some(item => item.id === pack.id), removable = custom, name = map.packNames[pack.id] || pack.name.replace('Kenney · ', '');
   $('managed-tileset-name').textContent = name;
-  $('edit-tileset-description').textContent = map.packDescriptions[pack.id] || 'Add a description…';
-  $('edit-tileset-description').classList.toggle('empty-description', !map.packDescriptions[pack.id]);
-  $('edit-tileset-description').setAttribute('aria-label', map.packDescriptions[pack.id] ? 'Edit tileset description' : 'Add tileset description');
   $('managed-tileset-actions').hidden = !custom; $('managed-imports').hidden = !custom; $('managed-tileset-delete').hidden = !removable; $('default-tileset-note').hidden = custom;
-  $('default-tileset-note').textContent = pack.optional ? 'Optional Kenney artwork. Removing this set keeps tiles already placed on your maps.' : 'Default artwork is included with the editor. Create a custom tileset to import your own tiles.';
+  $('default-tileset-note').textContent = pack.id === 'kenney-scribble' ? 'Hand-drawn dungeon floors, walls, props and characters.' : pack.id === 'kenney-tiny' ? 'Pixel dungeon terrain, furniture, items and characters.' : 'Default artwork is included with the editor. Create a custom tileset to import your own tiles.';
   const atImportLimit = custom && importCount(pack) >= policy.maxImports;
   $('import-tiles').disabled = !custom || atImportLimit; $('import-tiles').title = atImportLimit ? `Free allows 2 image imports per tileset. ${FREE_UPGRADE}` : '';
   $('save-pack').disabled = !libraryTiles(pack).length; $('save-pack').hidden = !custom; $('delete-pack').hidden = !removable; $('delete-pack').textContent = pack.optional ? 'Remove tileset' : 'Delete tileset';
@@ -778,7 +776,6 @@ function renderTilesetManager() {
   $('tileset-import-count').textContent = custom ? `${importCount(pack)} / 2 images` : '';
   $('tileset-import-budget').classList.toggle('at-limit', atImportLimit);
   $('managed-tilesets').replaceChildren();
-  $('add-kenney').hidden = builtinPacks.filter(pack => pack.collection === 'kenney').every(pack => sharedLibrary.enabledOptional.includes(pack.id));
   for (const [label, items] of [['Custom', availableCustomPacks()], ['Default', enabledBuiltins()]]) {
     if (!items.length) continue;
     const heading = document.createElement('h3'); heading.className = 'tileset-list-heading'; heading.textContent = label; $('managed-tilesets').append(heading);
@@ -833,35 +830,20 @@ $('pack-file').onchange = async event => {
   } catch (error) { showError(error); } finally { event.target.value = ''; }
 };
 $('save-pack').onclick = savePack;
-$('add-kenney').onclick = () => {
-  finishStroke(); const enabled = new Set(sharedLibrary.enabledOptional);
-  for (const input of document.querySelectorAll('#kenney-form input[name=pack]')) {
-    input.disabled = enabled.has(input.value); input.checked = !input.disabled;
-    input.closest('label').classList.toggle('already-added', input.disabled);
+function renderFreeTilesets() {
+  for (const button of document.querySelectorAll('[data-kenney-pack]')) {
+    const id = button.dataset.kenneyPack, added = sharedLibrary.enabledOptional.includes(id), name = id === 'kenney-scribble' ? 'Scribble' : 'Tiny Dungeon';
+    button.textContent = added ? 'Delete' : 'Add ' + name; button.dataset.action = added ? 'delete' : 'add'; button.classList.toggle('danger', added);
+    button.setAttribute('aria-label', (added ? 'Delete ' : 'Add ') + name);
   }
-  updateKenneyButton(); $('kenney-dialog').showModal();
+}
+$('free-tilesets').onclick = () => { finishStroke(); renderFreeTilesets(); $('kenney-import').open = false; $('kenney-dialog').showModal(); };
+for (const button of document.querySelectorAll('[data-kenney-pack]')) button.onclick = () => {
+  const pack = builtinPacks.find(pack => pack.id === button.dataset.kenneyPack && pack.collection === 'kenney'); if (!pack) return;
+  if (sharedLibrary.enabledOptional.includes(pack.id)) { confirmPackDeletion(pack); return; }
+  publishLibrary({ ...sharedLibrary, enabledOptional: [...sharedLibrary.enabledOptional, pack.id] });
+  activePack = managingPackId = pack.id; rebuildLibrary(); choosePack(pack.id, true); renderFreeTilesets(); changed();
 };
-function updateKenneyButton() { $('confirm-kenney').disabled = !document.querySelector('#kenney-form input[name=pack]:checked:not(:disabled)'); }
-for (const input of document.querySelectorAll('#kenney-form input[name=pack]')) input.onchange = updateKenneyButton;
-$('kenney-form').onsubmit = event => {
-  event.preventDefault(); const ids = [...document.querySelectorAll('#kenney-form input[name=pack]:checked:not(:disabled)')].map(input => input.value);
-  const optional = builtinPacks.filter(pack => pack.collection === 'kenney' && ids.includes(pack.id)); if (!optional.length) return;
-  const next = { ...sharedLibrary, enabledOptional: [...new Set([...sharedLibrary.enabledOptional, ...optional.map(pack => pack.id)])] };
-  const descriptions = { 'kenney-scribble': 'Hand-drawn dungeon floors, walls, props and characters. 64×64 artwork.', 'kenney-tiny': 'Pixel dungeon terrain, furniture, items and characters. 16×16 artwork.' };
-  for (const pack of optional) if (!(pack.id in map.packDescriptions)) map.packDescriptions[pack.id] = descriptions[pack.id];
-  publishLibrary(libraryFromProject(next, map)); $('kenney-dialog').close();
-  managingPackId = optional[0]?.id || activePack; activePack = managingPackId; rebuildLibrary(); choosePack(activePack, true); changed();
-};
-$('edit-tileset-description').onclick = () => {
-  describingPackId = managingPackId; $('pack-description').value = map.packDescriptions[describingPackId] || '';
-  $('description-dialog').showModal(); $('pack-description').focus();
-};
-$('description-form').onsubmit = event => {
-  event.preventDefault(); const id = describingPackId; if (!id) return;
-  map.packDescriptions[id] = $('pack-description').value.trim(); publishLibrary(libraryFromProject(sharedLibrary, map));
-  renderTilesetManager(); changed(); $('description-dialog').close();
-};
-$('description-dialog').addEventListener('close', () => { describingPackId = null; });
 $('backup-library').onclick = () => jsonDownload(sharedLibrary, 'trials-library.json');
 $('restore-library').onclick = () => $('library-file').click();
 $('library-file').onchange = async event => {

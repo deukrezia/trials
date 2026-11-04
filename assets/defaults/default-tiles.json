@@ -134,7 +134,7 @@
     {
       "id": "default-tiles:5",
       "name": "Ground 01",
-      "category": "Floors",
+      "category": "Walls",
       "src": "assets/defaults/default-tiles.png",
       "rect": [
         80,
@@ -162,7 +162,7 @@
     {
       "id": "default-tiles:4",
       "name": "Ground 03",
-      "category": "Floors",
+      "category": "Walls",
       "src": "assets/defaults/default-tiles.png",
       "rect": [
         64,
@@ -232,7 +232,7 @@
     {
       "id": "default-tiles:35",
       "name": "Ground 08",
-      "category": "Floors",
+      "category": "Props",
       "src": "assets/defaults/default-tiles.png",
       "rect": [
         48,
@@ -246,7 +246,7 @@
     {
       "id": "default-tiles:36",
       "name": "Ground 09",
-      "category": "Floors",
+      "category": "Props",
       "src": "assets/defaults/default-tiles.png",
       "rect": [
         64,
@@ -358,7 +358,7 @@
     {
       "id": "default-tiles:20",
       "name": "Edges 01",
-      "category": "Walls",
+      "category": "Floors",
       "src": "assets/defaults/default-tiles.png",
       "rect": [
         64,
@@ -372,7 +372,7 @@
     {
       "id": "default-tiles:28",
       "name": "Edges 02",
-      "category": "Walls",
+      "category": "Floors",
       "src": "assets/defaults/default-tiles.png",
       "rect": [
         64,
@@ -386,7 +386,7 @@
     {
       "id": "default-tiles:37",
       "name": "Edges 03",
-      "category": "Walls",
+      "category": "Floors",
       "src": "assets/defaults/default-tiles.png",
       "rect": [
         80,
@@ -400,7 +400,7 @@
     {
       "id": "default-tiles:38",
       "name": "Edges 04",
-      "category": "Walls",
+      "category": "Floors",
       "src": "assets/defaults/default-tiles.png",
       "rect": [
         96,
@@ -414,7 +414,7 @@
     {
       "id": "default-tiles:3",
       "name": "Stonework 01",
-      "category": "Props",
+      "category": "Floors",
       "src": "assets/defaults/default-tiles.png",
       "rect": [
         48,
@@ -442,7 +442,7 @@
     {
       "id": "default-tiles:26",
       "name": "Furnishings 01",
-      "category": "Props",
+      "category": "Floors",
       "src": "assets/defaults/default-tiles.png",
       "rect": [
         32,
@@ -456,7 +456,7 @@
     {
       "id": "default-tiles:34",
       "name": "Furnishings 02",
-      "category": "Props",
+      "category": "Floors",
       "src": "assets/defaults/default-tiles.png",
       "rect": [
         32,
@@ -484,7 +484,7 @@
     {
       "id": "default-tiles:29",
       "name": "Furnishings 04",
-      "category": "Props",
+      "category": "Walls",
       "src": "assets/defaults/default-tiles.png",
       "rect": [
         80,

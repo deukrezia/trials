@@ -119,7 +119,7 @@ test('selection, implicit pan, resize, content shift, renamed sets, VTT and prin
     await page.keyboard.down('Space'); await page.mouse.move(from.x, from.y); await page.mouse.down(); await page.mouse.move(from.x + 65, from.y + 35, { steps: 5 }); await page.mouse.up(); await page.keyboard.up('Space');
     assert.notEqual(await page.locator('#map-canvas').evaluate(node => node.toDataURL()), beforePan); assert.deepEqual((await saveMap()).layers[0].cells, saved.layers[0].cells); await page.locator('#fit-map').click();
     // Default-set aliases are persisted without changing tile IDs.
-    await openTilesets(page); assert.equal(await page.locator('#delete-pack').isVisible(), true); assert.equal(await page.locator('#delete-pack').textContent(), 'Remove tileset'); assert.equal(await page.locator('#save-pack').isVisible(), false);
+    await openTilesets(page); assert.equal(await page.locator('#delete-pack').isVisible(), false); assert.equal(await page.locator('#save-pack').isVisible(), false);
     await page.locator('#rename-tileset').click(); await page.locator('#pack-name').fill('Stone set'); await page.locator('#rename-form button[type=submit]').click();
     assert.equal(await page.locator('#pack-select option:checked').textContent(), 'Stone set'); assert.equal((await saveMap()).packNames['kenney-scribble'], 'Stone set');
     await page.locator('#map-settings').click(); await page.locator('#resize-width').fill('10'); await page.locator('#resize-height').fill('10'); await page.locator('#resize-form button[type=submit]').click();
@@ -155,7 +155,7 @@ test('selection, implicit pan, resize, content shift, renamed sets, VTT and prin
     assert.equal(await page.locator('#categories').isVisible(), false); assert.equal(await page.locator('#help-dialog #kenney-credit').count(), 0);
     await openTilesets(page); await page.locator('#rename-tileset').click(); await page.locator('#pack-name').fill('Renamed art'); await page.locator('#rename-form button[type=submit]').click();
     assert.equal((await saveMap()).packs[0].name, 'Renamed art');
-    await page.locator('#pack-select').selectOption('kenney-tiny'); assert.equal(await page.locator('#categories').isVisible(), true); assert.equal(await page.locator('#tileset-manager-dialog #kenney-credit').count(), 1);
+    await page.locator('#pack-select').selectOption('kenney-tiny'); assert.equal(await page.locator('#categories').isVisible(), true); assert.equal(await page.locator('#kenney-dialog #kenney-credit').count(), 1);
     await page.getByRole('button', { name: 'Paint', exact: true }).click(); const paint = await cell(2, 2); await page.mouse.click(paint.x, paint.y); await page.locator('#pack-select').selectOption('custom-only'); assert.equal(await page.locator('#kenney-credit').getAttribute('hidden'), null);
     await page.screenshot({ path: path.join(out, 'map-tools-custom.png') });
     // The selector's focus stays within its bounds and cannot cover the first custom tile.
