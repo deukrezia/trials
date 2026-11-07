@@ -4,10 +4,6 @@
     "optional": false
   },
   {
-    "manifest": "assets/defaults/default-tiles-2.json",
-    "optional": false
-  },
-  {
     "manifest": "assets/kenney-scribble/pack.json",
     "optional": true,
     "collection": "kenney"

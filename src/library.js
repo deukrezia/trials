@@ -2,6 +2,16 @@ import { createMap, validateMap, libraryPacks, libraryTiles, exportablePack } fr
 
 const clone = value => structuredClone(value);
 export const emptyLibrary = () => ({ format: 'vtt-tile-library', version: 1, packs: [], packNames: {}, packDescriptions: {}, enabledOptional: [], removedPacks: [], removedTiles: [], tileOrders: {} });
+export function mergeDefaultCollections(state, collections) {
+  const next=clone(state);
+  for(const pack of collections) {
+    const sources=pack.sources || [pack.id], aliases=new Map(pack.tiles.flatMap(tile=>(tile.legacyIds || []).map(id=>[id,tile.id])));
+    const order=[...(next.tileOrders[pack.id] || []),...sources.filter(id=>id!==pack.id).flatMap(id=>next.tileOrders[id] || [])];
+    if(order.length)next.tileOrders[pack.id]=[...new Set(order.map(id=>aliases.get(id)||id))];
+    for(const id of sources)if(id!==pack.id)delete next.tileOrders[id];
+  }
+  return next;
+}
 function sameVisual(pack, tile, source, original, cache) {
   if ((tile.pixelArt ?? true) !== (original.pixelArt ?? true) || (tile.cellSpacing || 0) !== (original.cellSpacing || 0) || tile.rect.some((value, i) => value !== original.rect[i])) return false;
   const key = JSON.stringify([pack.id, tile.image, original.image]);

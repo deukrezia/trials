@@ -25,7 +25,7 @@ Buying/downloading the desktop app removes Free upload restrictions and allows 1
 
 ## Tilesets
 
-Default Tiles 2 is also bundled from the owner’s unchanged 112×128 image, using 16×16 cells. Fully transparent regions are omitted. Both default sets are available in every project and do not consume custom library slots.
+There is one Default Tiles collection. It combines both unchanged source images on a 16×16 base grid: 86 visible brushes in total, including the second image’s four PT cells as one 2×2 Tree prop. The second source follows the owner’s exact category grid. Old individual tree-quarter IDs remain available only for rendering existing maps. Empty cells are omitted.
 
 Default Tiles uses the supplied `Default Tiles.png`: 16×16 setup, 38 visible tiles grouped by similar artwork (water, ground, walls, edges, stonework, furnishings and fire). Fully transparent cells are skipped, including uploaded sheets; partial transparency is retained. Originals are not modified. Open **Manage tilesets → Free Tilesets → Kenney**, then use **+** beside Scribble or Tiny Dungeon. An installed pack shows **×** in the same place. Removing it preserves placed map artwork, and it can be added again later. The Kenney heading links to its site; a CC0 disclaimer appears below these actions. Help contains **Made by Lazarus**; the bottom-right support link is https://ko-fi.com/lazarus_.
 
@@ -35,7 +35,7 @@ Drag palette tiles before/after others in the same tileset to arrange them. Alt+
 
 The library is shared by every project in the same browser profile/origin or desktop installation. Create a tileset once, then append source images through **Import tiles**. Rename, remove individual imports, or delete a custom set in the same manager. Removing library art preserves its existing map placements. Use library backup/import to transfer the library between devices, browsers or web and desktop; there is no cloud synchronization. Opening portable map files adopts their sets without resurrecting explicitly deleted library entries. Saved maps continue to embed artwork for portability. Clearing browser/app data removes local storage, so keep backups.
 
-For future defaults, add the original image and a descriptor in `assets/defaults/tilesets.json`, then run `npm.cmd run assets`. A `categoryGrid` can classify atlas cells left-to-right/top-to-bottom with F (Floors), W (Walls), P (Props) and - (excluded); the owner’s current grid gives 21 Floors, 10 Walls and 7 Props. IDs must remain stable after release. No editor code change is needed. Default artwork attribution is optional per the owner's instruction; metadata supports future authors/licenses.
+For future defaults, add the original image and a descriptor in `assets/defaults/tilesets.json` with `packId: "default-tiles"` to extend the same collection, then run `npm.cmd run assets`. A `categoryGrid` can classify atlas cells left-to-right/top-to-bottom with F (Floors), W (Walls), P (Props) and - (excluded); the owner’s current grid gives 21 Floors, 10 Walls and 7 Props. IDs must remain stable after release. No editor code change is needed. Default artwork attribution is optional per the owner's instruction; metadata supports future authors/licenses.
 
 ## Editing and export
 
@@ -86,3 +86,5 @@ In Manage tilesets, use Edit on an import to regroup its source cells after impo
 Export offers PNG or JPEG. JPEG uses the map background, has a 50–100% quality control and shows the encoded file size. PNG keeps optional transparency. Free image exports carry the existing faded watermark; paid image exports do not. WebP export is not included.
 
 Map settings → Recovery snapshots keeps local automatic checkpoints (at most once every two minutes when edits autosave), manual snapshots and a checkpoint before switching/restoring. Up to 12 snapshots per map are retained within a shared 96 MB / 48-entry budget. Restore saves the current state first. This is local recovery, separate from file backups; clearing browser/app storage removes it. No recent-maps screen is included.
+
+Default source descriptors can define `regions` with stable IDs and `[x, y, width, height]` cell bounds. Region brushes retain the original grid footprint; their earlier individual cell IDs stay hidden and renderable for saved-map compatibility. Existing palette orders from separate default sources migrate into the unified collection.

@@ -3,7 +3,7 @@ import { layerSymbol } from './layer-symbols.js';
 import { printPDF } from './print-export.js';
 import { createShapeMenu } from './shape-menu.js';
 import { createLayerMenu } from './layer-menu.js';
-import { emptyLibrary, validateLibrary, adoptProjectLibrary, projectWithLibrary, libraryFromProject, mergeLibraryBackup, orderedTiles, moveTileOrder } from './library.js';
+import { emptyLibrary, validateLibrary, adoptProjectLibrary, projectWithLibrary, libraryFromProject, mergeLibraryBackup, orderedTiles, moveTileOrder, mergeDefaultCollections } from './library.js';
 import { configureEdition } from './edition.js';
 import { editionPolicy, policyPacks, policyTiles, importCount, assertTileSetup, assertImportCapacity, cropBounds, FREE_UPGRADE } from './edition-policy.js';
 import { addFreePNGWatermark } from './watermark.js';
@@ -109,7 +109,7 @@ function changed() { dirty = true; revision++; $('save-state').textContent = 'Sa
 async function prepareAssets(candidate) {
   const allowedPacks = new Set(availableCustomPacks(candidate).map(pack => pack.id));
   const newImages = new Map(builtinTiles.map(tile => [tile.src, images.get(tile.src)]));
-  const newTiles = new Map(builtinPacks.flatMap(pack => pack.tiles.map(tile => [tile.id, { ...tile, hidden: !enabledBuiltins().includes(pack), packId: pack.id, packName: pack.name }])));
+  const newTiles = new Map(builtinPacks.flatMap(pack => pack.tiles.map(tile => [tile.id, { ...tile, hidden: !!tile.hidden || !enabledBuiltins().includes(pack), packId: pack.id, packName: pack.name }])));
   for (const pack of candidate.packs) {
     const allowedTiles = new Set(policyTiles(pack, policy).map(tile => tile.id));
     for (const image of pack.images) {
@@ -155,7 +155,7 @@ function renderPacks() {
 }
 function rebuildLibrary() {
   packs = [...enabledBuiltins(), ...availableCustomPacks()];
-  tiles = new Map(builtinPacks.flatMap(pack => pack.tiles.map(tile => [tile.id, { ...tile, hidden: !enabledBuiltins().includes(pack), packId: pack.id, packName: pack.name }])));
+  tiles = new Map(builtinPacks.flatMap(pack => pack.tiles.map(tile => [tile.id, { ...tile, hidden: !!tile.hidden || !enabledBuiltins().includes(pack), packId: pack.id, packName: pack.name }])));
   images = new Map(builtinTiles.map(tile => [tile.src, images.get(tile.src)]));
   const allowedPacks = new Set(availableCustomPacks().map(pack => pack.id));
   for (const pack of map.packs) {
@@ -1061,7 +1061,7 @@ $('library-file').onchange = async event => {
   try {
     const file = event.target.files[0]; if (!file) return;
     if (file.size > 64 * 1024 * 1024) throw new Error('Choose a library backup smaller than 64 MB.');
-    finishStroke(); const next = mergeLibraryBackup(sharedLibrary, JSON.parse(await file.text())), candidate = validateMap(projectWithLibrary(next, map), builtinTiles.map(tile => tile.id)), prepared = await prepareAssets(candidate);
+    finishStroke(); const next = mergeDefaultCollections(mergeLibraryBackup(sharedLibrary, JSON.parse(await file.text())), builtinPacks.filter(pack=>!pack.optional)), candidate = validateMap(projectWithLibrary(next, map), builtinTiles.map(tile => tile.id)), prepared = await prepareAssets(candidate);
     history.snapshot(() => { map.packs = candidate.packs; map.layers = candidate.layers; map.packNames = candidate.packNames; }, { includePacks: true }); map.packDescriptions = candidate.packDescriptions;
     publishLibrary(next); images = prepared.newImages; tiles = prepared.newTiles; rebuildLibrary(); gridChanged(); notify('Library imported. Tilesets are available in every project on this device.');
   } catch (error) { showError(error); } finally { event.target.value = ''; }
@@ -1160,7 +1160,7 @@ async function init() {
   builtinTiles = builtinPacks.flatMap(pack => pack.tiles);
   await Promise.all([...new Set(builtinTiles.map(tile => tile.src))].map(async src => images.set(src, await loadImage(src))));
   let restored;
-  try { const library = await storedLibrary(); if (library) sharedLibrary = validateLibrary(library); } catch (error) { notify('The shared library could not be loaded. Restore a library backup to recover it.', true); }
+  try { const library = await storedLibrary(); if (library) sharedLibrary = mergeDefaultCollections(validateLibrary(library),builtinPacks.filter(pack=>!pack.optional)); } catch (error) { notify('The shared library could not be loaded. Restore a library backup to recover it.', true); }
   try { const stored = await storedMap(); if (stored) restored = validateMap(stored, builtinTiles.map(tile => tile.id)); } catch (error) { notify('The previous local workspace could not be restored. Open a saved map to recover it.', true); }
   try { await installMap(restored || createMap()); }
   catch (error) { if (!restored) throw error; showError(error); await installMap(createMap()); }

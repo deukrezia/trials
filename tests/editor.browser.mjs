@@ -29,7 +29,7 @@ test('editor: paint, history, layers, import, portable save, PNG and restore', {
     assert.equal(await page.locator('button').evaluateAll(buttons => buttons.every(button => button.textContent.trim().length > 0 || button.getAttribute('aria-label'))), true);
     assert.equal(await page.locator('#brush-size, .layer-number, .mini-tag, .dock-heading, #tool-status, #map-stats, .active-layer-badge, .canvas-label').count(), 0);
     assert.deepEqual(await page.locator('.layer-select').allTextContents(), ['Objects', 'Walls', 'Ground']);
-    assert.equal(await page.locator('#pack-select').textContent(), 'All tilesetsDefault TilesDefault Tiles 2Scribble DungeonsTiny Dungeon');
+    assert.equal(await page.locator('#pack-select').textContent(), 'All tilesetsDefault TilesScribble DungeonsTiny Dungeon');
     assert.equal(await page.locator('body > .workspace').textContent().then(text => /Kenney|FREE|SELECT COMMAND|CLICK TO EQUIP/.test(text)), false);
     assert.equal(await page.evaluate(() => document.fonts.check('16px "Silkscreen"')), true);
     await page.screenshot({ path: path.join(outputDir, 'editor-desktop.png') });

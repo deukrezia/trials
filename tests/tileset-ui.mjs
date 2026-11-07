@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 const catalog = JSON.parse(await readFile(new URL('../assets/packs.json', import.meta.url), 'utf8'));
-export const defaultTileCount = (await Promise.all(catalog.filter(entry => !entry.optional).map(async entry => JSON.parse(await readFile(new URL(`../${entry.manifest}`, import.meta.url), 'utf8')).tiles.length))).reduce((sum, count) => sum + count, 0);
+export const defaultTileCount = (await Promise.all(catalog.filter(entry => !entry.optional).map(async entry => JSON.parse(await readFile(new URL(`../${entry.manifest}`, import.meta.url), 'utf8' )).tiles.filter(tile=>!tile.hidden).length))).reduce((sum, count) => sum + count, 0);
 export async function enableKenney(page) {
   // Core regression flows exercise the full paid editor; tier tests use the real web configuration.
   await page.route('**/assets/edition.json', route => route.fulfill({ json: { edition: 'desktop', ad: { enabled: false } } })); await page.reload();
@@ -35,4 +35,4 @@ export async function openTileImport(page) {
   await openTilesets(page); await page.locator('#import-tiles').click();
 }
 
-export const initialTileCount = JSON.parse(await readFile(new URL(`../${catalog.find(entry=>!entry.optional).manifest}`,import.meta.url),"utf8")).tiles.length;
+export const initialTileCount = JSON.parse(await readFile(new URL(`../${catalog.find(entry=>!entry.optional).manifest}`,import.meta.url),"utf8")).tiles.filter(tile=>!tile.hidden).length;

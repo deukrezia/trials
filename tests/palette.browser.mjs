@@ -27,7 +27,7 @@ test('palette organization, contextual edition details and removable optional Ke
     const arranged = await ids(); assert.deepEqual(arranged.slice(0, 3), [original[1], original[2], original[0]]); assert.deepEqual((await saved()).layers, before.layers);
     await tile(original[0]).focus(); await page.keyboard.press('Alt+ArrowLeft'); assert.deepEqual((await ids()).slice(0, 3), [original[1], original[0], original[2]]);
     const expected = await ids();
-    await page.locator('#categories').getByRole('button', { name: 'Walls', exact: true }).click(); assert.deepEqual(new Set(await ids()), new Set([4, 5, 6, 7, 13, 14, 15, 22, 29, 30].map(index => `default-tiles:${index}`)));
+    await page.locator('#categories').getByRole('button', { name: 'Walls', exact: true }).click(); assert.deepEqual(new Set(await ids()), new Set([...([4, 5, 6, 7, 13, 14, 15, 22, 29, 30].map(index => `default-tiles:${index}`)), ...([35,36,37,38,39,40,42,43,44,45,46,47,49,50,51].map(index=>`default-tiles-2:${index}`))]));
     await page.locator('#categories').getByRole('button', { name: 'All', exact: true }).click(); assert.deepEqual(await ids(), expected);
     await page.locator('#new-map').click(); await page.locator('#new-form [name=name]').fill('Organized next project'); await page.locator('#new-form button[type=submit]').click(); await page.waitForFunction(() => document.querySelector('#map-name').value === 'Organized next project'); assert.deepEqual(await ids(), expected);
     await openTilesets(page); assert.equal(await page.locator('#free-edition-rules').textContent(), 'Free edition'); await page.locator('#free-edition-rules').click();

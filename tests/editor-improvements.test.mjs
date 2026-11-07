@@ -44,5 +44,5 @@ test('region editing distinguishes transparent atlas holes from source gutters',
 test('Default Tiles 2 ships at 16px with stable atlas IDs and no fully transparent brushes',async()=>{
   const pack=JSON.parse(await readFile(new URL('../assets/defaults/default-tiles-2.json',import.meta.url))),image=PNG.sync.read(await readFile(new URL('../assets/defaults/default-tiles-2.png',import.meta.url)));
   assert.deepEqual([image.width,image.height],[112,128]);assert.ok(pack.tiles.length>30);
-  for(const tile of pack.tiles){const index=Number(tile.id.split(':')[1]);assert.deepEqual(tile.rect,[index%7*16,Math.floor(index/7)*16,16,16]);const[x,y,w,h]=tile.rect;let alpha=0;for(let sy=y;sy<y+h;sy++)for(let sx=x;sx<x+w;sx++)alpha+=image.data[(sy*image.width+sx)*4+3];assert.ok(alpha>0);}
+  for(const tile of pack.tiles){const index=Number(tile.id.split(':')[1]);if(tile.footprint)assert.deepEqual(tile.rect,[48,48,32,32]);else assert.deepEqual(tile.rect,[index%7*16,Math.floor(index/7)*16,16,16]);const[x,y,w,h]=tile.rect;let alpha=0;for(let sy=y;sy<y+h;sy++)for(let sx=x;sx<x+w;sx++)alpha+=image.data[(sy*image.width+sx)*4+3];assert.ok(alpha>0);}
 });

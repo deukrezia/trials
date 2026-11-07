@@ -104,7 +104,7 @@
   },
   {
     "id": "default-tiles-2",
-    "name": "Default Tiles 2",
+    "name": "Terrain",
     "file": "default-tiles-2.png",
     "tileWidth": 16,
     "tileHeight": 16,
@@ -116,14 +116,29 @@
     "license": null,
     "attributionRequired": false,
     "categoryGrid": [
-      "FFFFFFP",
-      "FFFFFFP",
-      "PFFFFFF",
-      "FFFFFFF",
-      "FFFFFFW",
-      "FFFFFFP",
-      "FFFFFF-",
-      "FFF----"
+      "FFFPPPP",
+      "FFFPPPP",
+      "PFFPPPF",
+      "FFFPPFF",
+      "FFFPPFF",
+      "WWWWWWP",
+      "WWWWWW-",
+      "WWW----"
+    ],
+    "packId": "default-tiles",
+    "packName": "Default Tiles",
+    "regions": [
+      {
+        "id": "tree",
+        "name": "Tree",
+        "category": "Props",
+        "cells": [
+          3,
+          3,
+          2,
+          2
+        ]
+      }
     ]
   }
 ]

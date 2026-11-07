@@ -17,7 +17,7 @@ test('desktop opens offline with no ads and keeps its shared library across rest
     await page.waitForFunction(count => document.querySelectorAll('.tile-button').length === count, initialTileCount);
     assert.equal(await desktop.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()), false);
     assert.equal(await page.locator('html').getAttribute('data-edition'), 'desktop'); assert.equal(await page.locator('#sponsor-slot').isVisible(), false); assert.equal(await page.locator('#pack-select option[value=kenney-tiny]').count(), 0);
-    assert.equal(await page.locator('#pack-select option[value=default-tiles-2]').count(),1);
+    assert.equal(await page.locator('#pack-select option[value=default-tiles-2]').count(),0);
     return page;
   }
   try {

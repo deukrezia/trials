@@ -4,6 +4,10 @@
   "author": null,
   "license": null,
   "attributionRequired": false,
+  "sources": [
+    "default-tiles",
+    "default-tiles-2"
+  ],
   "tiles": [
     {
       "id": "default-tiles:0",
@@ -536,6 +540,696 @@
       ],
       "pixelArt": true,
       "order": 37
+    },
+    {
+      "id": "default-tiles-2:0",
+      "name": "Terrain 001",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:1",
+      "name": "Terrain 002",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:2",
+      "name": "Terrain 003",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:3",
+      "name": "Terrain 004",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:4",
+      "name": "Terrain 005",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        64,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:5",
+      "name": "Terrain 006",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        80,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:6",
+      "name": "Terrain 007",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        96,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:7",
+      "name": "Terrain 008",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:8",
+      "name": "Terrain 009",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:9",
+      "name": "Terrain 010",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:10",
+      "name": "Terrain 011",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:11",
+      "name": "Terrain 012",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        64,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:12",
+      "name": "Terrain 013",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        80,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:13",
+      "name": "Terrain 014",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        96,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:14",
+      "name": "Terrain 015",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:15",
+      "name": "Terrain 016",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:16",
+      "name": "Terrain 017",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:17",
+      "name": "Terrain 018",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:18",
+      "name": "Terrain 019",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        64,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:19",
+      "name": "Terrain 020",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        80,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:20",
+      "name": "Terrain 021",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        96,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:21",
+      "name": "Terrain 022",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:22",
+      "name": "Terrain 023",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:23",
+      "name": "Terrain 024",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:tree",
+      "name": "Tree",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        48,
+        32,
+        32
+      ],
+      "footprint": [
+        2,
+        2
+      ],
+      "pixelArt": true,
+      "legacyIds": [
+        "default-tiles-2:24",
+        "default-tiles-2:25",
+        "default-tiles-2:31",
+        "default-tiles-2:32"
+      ]
+    },
+    {
+      "id": "default-tiles-2:24",
+      "name": "Terrain 025",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "hidden": true
+    },
+    {
+      "id": "default-tiles-2:25",
+      "name": "Terrain 026",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        64,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "hidden": true
+    },
+    {
+      "id": "default-tiles-2:26",
+      "name": "Terrain 027",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        80,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:27",
+      "name": "Terrain 028",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        96,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:28",
+      "name": "Terrain 029",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:29",
+      "name": "Terrain 030",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:30",
+      "name": "Terrain 031",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:31",
+      "name": "Terrain 032",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "hidden": true
+    },
+    {
+      "id": "default-tiles-2:32",
+      "name": "Terrain 033",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        64,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true,
+      "hidden": true
+    },
+    {
+      "id": "default-tiles-2:33",
+      "name": "Terrain 034",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        80,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:34",
+      "name": "Terrain 035",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        96,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:35",
+      "name": "Terrain 036",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        80,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:36",
+      "name": "Terrain 037",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        80,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:37",
+      "name": "Terrain 038",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        80,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:38",
+      "name": "Terrain 039",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        80,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:39",
+      "name": "Terrain 040",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        64,
+        80,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:40",
+      "name": "Terrain 041",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        80,
+        80,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:41",
+      "name": "Terrain 042",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        96,
+        80,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:42",
+      "name": "Terrain 043",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        96,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:43",
+      "name": "Terrain 044",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        96,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:44",
+      "name": "Terrain 045",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        96,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:45",
+      "name": "Terrain 046",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        96,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:46",
+      "name": "Terrain 047",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        64,
+        96,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:47",
+      "name": "Terrain 048",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        80,
+        96,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:49",
+      "name": "Terrain 050",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        112,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:50",
+      "name": "Terrain 051",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        112,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:51",
+      "name": "Terrain 052",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        112,
+        16,
+        16
+      ],
+      "pixelArt": true
     }
   ]
 }
