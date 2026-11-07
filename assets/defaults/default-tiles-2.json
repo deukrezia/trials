@@ -1,0 +1,672 @@
+{
+  "id": "default-tiles-2",
+  "name": "Default Tiles 2",
+  "author": null,
+  "license": null,
+  "attributionRequired": false,
+  "tiles": [
+    {
+      "id": "default-tiles-2:0",
+      "name": "Default Tiles 2 001",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:1",
+      "name": "Default Tiles 2 002",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:2",
+      "name": "Default Tiles 2 003",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:3",
+      "name": "Default Tiles 2 004",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:4",
+      "name": "Default Tiles 2 005",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        64,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:5",
+      "name": "Default Tiles 2 006",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        80,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:6",
+      "name": "Default Tiles 2 007",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        96,
+        0,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:7",
+      "name": "Default Tiles 2 008",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:8",
+      "name": "Default Tiles 2 009",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:9",
+      "name": "Default Tiles 2 010",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:10",
+      "name": "Default Tiles 2 011",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:11",
+      "name": "Default Tiles 2 012",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        64,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:12",
+      "name": "Default Tiles 2 013",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        80,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:13",
+      "name": "Default Tiles 2 014",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        96,
+        16,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:14",
+      "name": "Default Tiles 2 015",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:15",
+      "name": "Default Tiles 2 016",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:16",
+      "name": "Default Tiles 2 017",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:17",
+      "name": "Default Tiles 2 018",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:18",
+      "name": "Default Tiles 2 019",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        64,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:19",
+      "name": "Default Tiles 2 020",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        80,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:20",
+      "name": "Default Tiles 2 021",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        96,
+        32,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:21",
+      "name": "Default Tiles 2 022",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:22",
+      "name": "Default Tiles 2 023",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:23",
+      "name": "Default Tiles 2 024",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:24",
+      "name": "Default Tiles 2 025",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:25",
+      "name": "Default Tiles 2 026",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        64,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:26",
+      "name": "Default Tiles 2 027",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        80,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:27",
+      "name": "Default Tiles 2 028",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        96,
+        48,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:28",
+      "name": "Default Tiles 2 029",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:29",
+      "name": "Default Tiles 2 030",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:30",
+      "name": "Default Tiles 2 031",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:31",
+      "name": "Default Tiles 2 032",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:32",
+      "name": "Default Tiles 2 033",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        64,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:33",
+      "name": "Default Tiles 2 034",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        80,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:34",
+      "name": "Default Tiles 2 035",
+      "category": "Walls",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        96,
+        64,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:35",
+      "name": "Default Tiles 2 036",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        80,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:36",
+      "name": "Default Tiles 2 037",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        80,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:37",
+      "name": "Default Tiles 2 038",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        80,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:38",
+      "name": "Default Tiles 2 039",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        80,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:39",
+      "name": "Default Tiles 2 040",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        64,
+        80,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:40",
+      "name": "Default Tiles 2 041",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        80,
+        80,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:41",
+      "name": "Default Tiles 2 042",
+      "category": "Props",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        96,
+        80,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:42",
+      "name": "Default Tiles 2 043",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        96,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:43",
+      "name": "Default Tiles 2 044",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        96,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:44",
+      "name": "Default Tiles 2 045",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        96,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:45",
+      "name": "Default Tiles 2 046",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        48,
+        96,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:46",
+      "name": "Default Tiles 2 047",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        64,
+        96,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:47",
+      "name": "Default Tiles 2 048",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        80,
+        96,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:49",
+      "name": "Default Tiles 2 050",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        0,
+        112,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:50",
+      "name": "Default Tiles 2 051",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        16,
+        112,
+        16,
+        16
+      ],
+      "pixelArt": true
+    },
+    {
+      "id": "default-tiles-2:51",
+      "name": "Default Tiles 2 052",
+      "category": "Floors",
+      "src": "assets/defaults/default-tiles-2.png",
+      "rect": [
+        32,
+        112,
+        16,
+        16
+      ],
+      "pixelArt": true
+    }
+  ]
+}

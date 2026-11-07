@@ -34,3 +34,5 @@ export async function createTileset(page, name) {
 export async function openTileImport(page) {
   await openTilesets(page); await page.locator('#import-tiles').click();
 }
+
+export const initialTileCount = JSON.parse(await readFile(new URL(`../${catalog.find(entry=>!entry.optional).manifest}`,import.meta.url),"utf8")).tiles.length;

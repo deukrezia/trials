@@ -7,7 +7,7 @@ import { readFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 import { createMap, addLayer, History } from '../src/model.js';
-import { createTileset, openTilesets, closeTilesets, openTileImport, defaultTileCount } from './tileset-ui.mjs';
+import { createTileset, openTilesets, closeTilesets, openTileImport, initialTileCount } from './tileset-ui.mjs';
 
 test('Trials editions: shared library, Free limits, top-left cropping, alpha and PNG watermark', { timeout: 120000 }, async () => {
   const root = fileURLToPath(new URL('../', import.meta.url));
@@ -17,7 +17,7 @@ test('Trials editions: shared library, Free limits, top-left cropping, alpha and
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true }), page = await context.newPage(), errors = [];
     page.on('pageerror', error => errors.push(error.message)); await page.goto('http://127.0.0.1:4194'); await page.waitForSelector('.tile-button');
     assert.match(await page.title(), /Trials/); assert.equal(await page.locator('.brand').textContent(), 'TRIALS');
-    assert.equal(await page.locator('.tile-button').count(), defaultTileCount); assert.equal(await page.locator('#pack-select option[value=kenney-tiny]').count(), 0);
+    assert.equal(await page.locator('.tile-button').count(), initialTileCount); assert.equal(await page.locator('#pack-select option[value=kenney-tiny]').count(), 0);
     async function saved() { await closeTilesets(page); const download = page.waitForEvent('download'); await page.locator('#save-map').click(); return JSON.parse(await readFile(await (await download).path(), 'utf8')); }
     async function openMap(map) { await page.locator('#map-file').setInputFiles({ name: 'test.vttmap.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(map)) }); await page.waitForFunction(name => document.querySelector('#map-name').value === name, map.name); }
     while (await page.locator('.layer-row').count() < 6) await page.locator('#add-layer').click(); assert.equal(await page.locator('#add-layer').isDisabled(), true);
@@ -37,7 +37,7 @@ test('Trials editions: shared library, Free limits, top-left cropping, alpha and
     assert.equal(pack.images.length, 2); assert.equal(pack.tiles.length, 2); assert.equal(pack.images[0].width, 160);
     const cropped = PNG.sync.read(Buffer.from(pack.images[0].data.split(',')[1], 'base64')); assert.equal(cropped.width, 160); assert.equal(cropped.height, 160); assert.equal(cropped.data[3], 128); assert.equal(cropped.data[(20 * 160 + 20) * 4 + 3], 0);
     await openTilesets(page); assert.equal(await page.locator('#import-tiles').isDisabled(), true);
-    await page.locator('.import-row').first().getByRole('button').click(); await page.locator('#delete-import-form button[type=submit]').click(); assert.equal(await page.locator('#import-tiles').isDisabled(), false); await closeTilesets(page); await upload();
+    await page.locator('.import-row').first().getByRole('button', { name: /^Remove import/ }).click(); await page.locator('#delete-import-form button[type=submit]').click(); assert.equal(await page.locator('#import-tiles').isDisabled(), false); await closeTilesets(page); await upload();
     const second = await createTileset(page, 'Shared props'); await openTilesets(page); assert.equal(await page.locator('#new-tileset').isDisabled(), true);
     assert.match(await page.locator('#kenney-credit').textContent(), /Kenney/); await closeTilesets(page);
     await page.locator('#new-map').click(); await page.locator('#new-form [name=name]').fill('Shared second project'); await page.locator('#new-form button[type=submit]').click(); await page.waitForFunction(() => document.querySelector('#map-name').value === 'Shared second project');

@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { defaultTileCount, createTileset } from './tileset-ui.mjs';
+import { initialTileCount, createTileset } from './tileset-ui.mjs';
 
 test('desktop opens offline with no ads and keeps its shared library across restarts', { timeout: 120000 }, async () => {
   const root = fileURLToPath(new URL('../', import.meta.url)), profile = path.join(root, '.test-output', `desktop-profile-${Date.now()}`); await mkdir(profile, { recursive: true });
@@ -14,9 +14,10 @@ test('desktop opens offline with no ads and keeps its shared library across rest
   async function launch() {
     desktop = await _electron.launch({ executablePath, args: process.env.TRIALS_TEST_EXECUTABLE ? [] : [path.resolve(root)], env: environment, timeout: 45000 });
     const page = await desktop.firstWindow();
-    await page.waitForFunction(count => document.querySelectorAll('.tile-button').length === count, defaultTileCount);
+    await page.waitForFunction(count => document.querySelectorAll('.tile-button').length === count, initialTileCount);
     assert.equal(await desktop.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()), false);
     assert.equal(await page.locator('html').getAttribute('data-edition'), 'desktop'); assert.equal(await page.locator('#sponsor-slot').isVisible(), false); assert.equal(await page.locator('#pack-select option[value=kenney-tiny]').count(), 0);
+    assert.equal(await page.locator('#pack-select option[value=default-tiles-2]').count(),1);
     return page;
   }
   try {
@@ -33,14 +34,19 @@ test('desktop opens offline with no ads and keeps its shared library across rest
     await page.getByRole('button', { name: 'Restore window', exact: true }).waitFor();
     await desktop.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.send('trials:window-state', { maximized: false })); await page.getByRole('button', { name: 'Maximize window', exact: true }).waitFor();
     await desktop.evaluate(({ session }) => { session.fromPartition('persist:map-maker').webRequest.onBeforeRequest({ urls: ['http://*/*', 'https://*/*'] }, (_details, callback) => callback({ cancel: true })); });
+    await page.locator('#export-map').click();await page.locator('#export-format').selectOption('jpeg');assert.equal(await page.locator('#jpeg-quality-row').isVisible(),true);await page.locator('#export-dialog').getByRole('button',{name:'Cancel',exact:true}).click();
     const id = await createTileset(page, 'Desktop shared library');
     await page.locator('#new-map').click(); await page.locator('#new-form [name=name]').fill('Desktop second map'); await page.locator('#new-form button[type=submit]').click();
     await page.waitForFunction(() => document.querySelector('#map-name').value === 'Desktop second map'); assert.equal(await page.locator(`#pack-select option[value="${id}"]`).count(), 1);
     await page.locator('#help').click(); assert.match(await page.locator('#help-dialog').textContent(), /Made by Lazarus/); assert.equal(await page.locator('#help-dialog #kenney-credit').count(), 0); await page.locator('#help-dialog').getByRole('button', { name: 'Close', exact: true }).click();
     assert.equal(await page.locator('.support-link').getAttribute('href'), 'https://ko-fi.com/lazarus_');
-    await page.waitForFunction(() => document.querySelector('#save-state').textContent === 'Saved locally in this browser'); await desktop.close(); desktop = null;
+    await page.waitForFunction(() => document.querySelector('#save-state').textContent === 'Saved locally in this browser');
+    await page.locator('#map-settings').click();await page.locator('#open-recovery').click();await page.locator('#save-snapshot').click();await page.waitForFunction(()=>document.querySelector('#recovery-list').textContent.includes('Manual'));await page.locator('#recovery-dialog [data-close]').click();await page.locator('#map-settings-dialog [data-close]').first().click();
+    await desktop.close(); desktop = null;
     page = await launch(); await page.waitForFunction(() => document.querySelector('#map-name').value === 'Desktop second map'); assert.equal(await page.locator(`#pack-select option[value="${id}"]`).count(), 1);
-    await page.screenshot({ path: path.join(root, '.test-output', 'desktop-edition.png') }); assert.deepEqual(errors, []);
+    await page.locator('#map-settings').click();await page.locator('#open-recovery').click();await page.locator('#recovery-dialog').waitFor({state:'visible'});assert.match(await page.locator('#recovery-list').textContent(),/Manual/);await page.locator('#recovery-dialog [data-close]').click();await page.locator('#map-settings-dialog [data-close]').first().click();
+    const capture=await desktop.evaluate(async({BrowserWindow})=>(await BrowserWindow.getAllWindows()[0].webContents.capturePage(undefined,{stayHidden:true,stayAwake:true})).toPNG().toString('base64'));
+    await writeFile(path.join(root,'.test-output','desktop-edition.png'),Buffer.from(capture,'base64'));assert.deepEqual(errors, []);
     console.log('Hidden desktop smoke test passed: offline local scheme, ad-free edition and persistent shared library.');
   } finally { if (desktop) await desktop.close(); }
 });

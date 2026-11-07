@@ -8,6 +8,9 @@ import { configureEdition } from './edition.js';
 import { editionPolicy, policyPacks, policyTiles, importCount, assertTileSetup, assertImportCapacity, cropBounds, FREE_UPGRADE } from './edition-policy.js';
 import { addFreePNGWatermark } from './watermark.js';
 import { footprint, baseTileSize, partRect, stampParts, rotatedFootprint, patternAnchors, sheetEntries } from './multi-tile.js';
+import { copySelection, pasteSelection, pasteTargets, canPaste } from './selection-clipboard.js';
+import { replaceImportRegions, inferSheetGrid } from './region-edit.js';
+import { createRecoveryStore } from './recovery.js';
 import { initializeWindowChrome } from './window-chrome.js';
 
 initializeWindowChrome();
@@ -19,7 +22,9 @@ const viewport = $('viewport');
 let map, history, builtinPacks = [], builtinTiles = [], selected, layerIndex = 0, tool = 'brush', rotation = 0, flip = false;
 let activeCategory = 'All', activePack = 'all', grid = true, zoom = 1, pan = { x: 0, y: 0 };
 let pointer = null, pendingMapMove = null, hover = null, spaceHeld = false, dirty = false, revision = 0;
-let selection = new Set();
+let selection = new Set(), selectionClipboard = null, pendingPaste = null;
+const recovery = createRecoveryStore();
+let regionEdit = null, exportEstimateGeneration = 0, exportEstimateTimer;
 let shapeType = 'rectangle', shapeOutline = false, shapePlacement = null;
 let importRegions = [], importDrag = null, importLayoutKey = '';
 let paletteSelection = new Set(), paletteAnchor = null;
@@ -95,6 +100,7 @@ function autosave() {
       await libraryWrite;
       await new Promise((resolve, reject) => { const tx = db.transaction('maps', 'readwrite'); tx.objectStore('maps').put(value, AUTOSAVE_KEY); tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error); });
       if (revision === saveRevision) $('save-state').textContent = 'Saved locally in this browser';
+      recovery.checkpoint(value).catch(() => {});
     } catch { $('save-state').textContent = 'Use Save map to keep your work'; }
   }, 600);
 }
@@ -117,7 +123,8 @@ async function prepareAssets(candidate) {
   return { newImages, newTiles };
 }
 async function installMap(candidate) {
-  finishStroke();
+  finishStroke(); pendingPaste = null;
+  if (map) await recovery.checkpoint(map, 'Before switching or restoring', true).catch(() => {});
   pendingMapMove = null; $('move-confirm-dialog').close();
   deletingPackId = null; $('delete-pack-dialog').close();
   managingPackId = null; deletingImport = null; $('tileset-manager-dialog').close(); $('delete-import-dialog').close();
@@ -182,8 +189,8 @@ function renderCategories() {
     button.onclick = () => { activeCategory = category; paletteSelection.clear(); renderCategories(); renderPalette(); }; $('categories').append(button);
   }
 }
-function drawTile(context, tileId, x, y, pixels, turns = 0, mirrored = false, opacity = 1, part = null) {
-  const tile = tiles.get(tileId), image = tile && images.get(tile.src);
+function drawTile(context, tileId, x, y, pixels, turns = 0, mirrored = false, opacity = 1, part = null, sourceTile = null, sourceImage = null) {
+  const tile = sourceTile || tiles.get(tileId), image = sourceImage || (tile && images.get(tile.src));
   if (!image) return;
   const [sx, sy, sw, sh] = partRect(tile, part);
   context.save(); context.globalAlpha *= opacity; context.translate(x + pixels / 2, y + pixels / 2); context.rotate(turns * Math.PI / 2); context.scale(mirrored ? -1 : 1, 1);
@@ -191,6 +198,7 @@ function drawTile(context, tileId, x, y, pixels, turns = 0, mirrored = false, op
   context.drawImage(image, sx, sy, sw, sh, -pixels / 2, -pixels / 2, pixels, pixels); context.restore();
 }
 function drawStamp(context, tileId, x, y, pixels, turns = 0, mirrored = false, opacity = 1) {
+  if (!tiles.has(tileId)) return;
   for (const part of stampParts(placement(tileId, turns, mirrored), footprint(tiles.get(tileId)), 'preview')) drawTile(context, tileId, x + part.x * pixels, y + part.y * pixels, pixels, turns, mirrored, opacity, part.cell.part);
 }
 function renderPalette() {
@@ -317,7 +325,8 @@ function updateCursorStatus() {
 }
 function updateCursor() {
   let cursor = 'crosshair'; const inside = hover && inBounds(map, hover.x, hover.y), layer = map.layers[layerIndex];
-  if (pointer?.mode === 'pan' || pointer?.mode === 'move-map' || pointer?.mode === 'move-selection') cursor = 'grabbing';
+  if (pendingPaste) cursor = inside && canPaste(map,pendingPaste.clip,hover.x,hover.y) ? 'copy' : 'not-allowed';
+  else if (pointer?.mode === 'pan' || pointer?.mode === 'move-map' || pointer?.mode === 'move-selection') cursor = 'grabbing';
   else if (spaceHeld || (hover && !inside)) cursor = 'grab';
   else if (projectOverLimit() && tool !== 'picker') cursor = 'not-allowed';
   else if (tool === 'move-map') cursor = 'grab';
@@ -333,7 +342,7 @@ function updateStats() {
   $('undo').disabled = !history.undoStack.length; $('redo').disabled = !history.redoStack.length;
 }
 function setTool(value) {
-  finishStroke(); tool = value; if (tool !== 'select') selection.clear();
+  finishStroke(); pendingPaste = null; tool = value; if (tool !== 'select') selection.clear();
   shapeMenu.close();
   for (const button of $('tools').children) { button.classList.toggle('active', button.dataset.tool === tool); button.setAttribute('aria-pressed', button.dataset.tool === tool); }
   $('move-map').classList.toggle('active', tool === 'move-map'); $('move-map').setAttribute('aria-pressed', tool === 'move-map');
@@ -394,7 +403,16 @@ function render() {
   ctx.restore();
   if (grid && px >= 8) drawGrid(ctx, map.width, map.height, px, '#b5bfa01c');
   ctx.strokeStyle = '#aebf864f'; ctx.lineWidth = 1; ctx.strokeRect(0, 0, map.width * px, map.height * px);
-  ctx.beginPath(); ctx.rect(0, 0, map.width * px, map.height * px); ctx.clip();
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, map.width * px, map.height * px); ctx.clip();
+  if (pendingPaste && hover) {
+    const valid = canPaste(map,pendingPaste.clip,hover.x,hover.y);
+    for (const entry of pendingPaste.clip.layers) for (const part of entry.cells) {
+      const pack=pendingPaste.clip.packs.find(pack=>pack.tiles.some(tile=>tile.id===part.cell.tile)), tile=pack?.tiles.find(tile=>tile.id===part.cell.tile), image=pack?.images.find(image=>image.id===tile.image);
+      drawTile(ctx,part.cell.tile,(hover.x+part.x)*px,(hover.y+part.y)*px,px,part.cell.rotation,part.cell.flip,.55,part.cell.part,tile,image && customImages.get(image.data));
+    }
+    ctx.fillStyle = valid ? '#8bc3d420' : '#e5686850'; ctx.strokeStyle = valid ? '#a8e3ef' : '#ff8585';
+    ctx.fillRect(hover.x*px,hover.y*px,pendingPaste.clip.bounds.width*px,pendingPaste.clip.bounds.height*px); ctx.strokeRect(hover.x*px,hover.y*px,pendingPaste.clip.bounds.width*px,pendingPaste.clip.bounds.height*px);
+  }
   if (selection.size && tool === 'select') {
     ctx.save(); ctx.fillStyle = '#8bc3d430'; ctx.strokeStyle = '#a8e3ef'; ctx.lineWidth = 1.5;
     for (const index of selection) ctx.fillRect((index % map.width + dx) * px, (Math.floor(index / map.width) + dy) * px, px, px);
@@ -411,10 +429,13 @@ function render() {
   } else if (pointer?.mode === 'selection-rect' && hover) {
     const x = Math.min(pointer.start.x, hover.x), y = Math.min(pointer.start.y, hover.y), rw = Math.abs(pointer.start.x - hover.x) + 1, rh = Math.abs(pointer.start.y - hover.y) + 1;
     ctx.fillStyle = '#d6b77840'; ctx.fillRect(x * px, y * px, rw * px, rh * px); ctx.strokeStyle = '#e2c78f'; ctx.strokeRect(x * px, y * px, rw * px, rh * px);
-  } else if (hover && inBounds(map, hover.x, hover.y) && !spaceHeld && tool !== 'select' && tool !== 'move-map') {
+  }
+  ctx.restore();
+  if (hover && inBounds(map, hover.x, hover.y) && !spaceHeld && tool !== 'select' && tool !== 'move-map' && !pendingPaste && !shapePlacement && !['shape','selection-rect'].includes(pointer?.mode)) {
     const size = tool === 'eraser' ? [1,1] : rotatedFootprint(footprint(tiles.get(selected)), rotation), start = 0;
+    const invalid = !map.layers[layerIndex].visible || map.layers[layerIndex].locked || map.layers[layerIndex].opacity === 0 || hover.x+size[0]>map.width || hover.y+size[1]>map.height;
     if (['brush', 'fill'].includes(tool) && !pointer && !map.layers[layerIndex].locked && map.layers[layerIndex].visible) drawStamp(ctx, selected, hover.x * px, hover.y * px, px, rotation, flip, .48 * (map.layers[layerIndex].opacity ?? 1));
-    ctx.fillStyle = tool === 'eraser' ? '#e7a49a25' : '#d6b77812'; ctx.strokeStyle = tool === 'eraser' ? '#e7a49a' : '#e5c991';
+    ctx.fillStyle = invalid ? '#e5686850' : tool === 'eraser' ? '#e7a49a25' : '#d6b77812'; ctx.strokeStyle = invalid ? '#ff8585' : tool === 'eraser' ? '#e7a49a' : '#e5c991';
     ctx.fillRect((hover.x + start) * px, (hover.y + start) * px, size[0] * px, size[1] * px); ctx.strokeRect((hover.x + start) * px, (hover.y + start) * px, size[0] * px, size[1] * px);
   }
   ctx.restore(); $('zoom-reset').textContent = `${Math.round(zoom * 100)}%`;
@@ -469,6 +490,46 @@ function applySelection(operation, dx = 0, dy = 0) {
     updateBrush(); requestRender();
   } catch (error) { notify(error.message, true); }
 }
+function captureSelection(cut = false) {
+  finishStroke(); const clip = copySelection(map,[...selectedLayerIds],selection);
+  if (!clip) return;
+  selectionClipboard = clip;
+  if (cut) { if (!canEditProject()) return; applySelection('delete'); }
+  notify(cut ? 'Selection cut.' : 'Selection copied.');
+}
+async function startPaste() {
+  if (!selectionClipboard || !canEditProject()) return;
+  try {
+    pasteTargets(map,selectionClipboard,[...selectedLayerIds]);
+    for (const pack of selectionClipboard.packs) for (const image of pack.images) if (!customImages.has(image.data)) customImages.set(image.data,await loadImage(image.data));
+    setTool('select'); selection.clear();
+    pendingPaste = {clip:selectionClipboard,layerIds:[...selectedLayerIds]};
+    hover ||= {x:selectionClipboard.bounds.x,y:selectionClipboard.bounds.y};
+    updateBrush(); notify('Click to paste. Esc cancels.'); requestRender();
+  } catch(error) { showError(error); }
+}
+function commitPaste(point) {
+  if (!pendingPaste || !canEditProject()) return;
+  try {
+    const pending = pendingPaste, indices = pasteSelection(history,pending.clip,point.x,point.y,pending.layerIds);
+    pendingPaste = null; rebuildLibrary(); selection = new Set(indices); updateBrush(); changed();
+  } catch(error) { notify(error.message,true); }
+}
+function duplicateSelection() {
+  if (!canEditProject()) return;
+  const clip = copySelection(map,[...selectedLayerIds],selection); if (!clip) return;
+  selectionClipboard = clip;
+  const {x,y,width,height}=clip.bounds, candidates=[{x:x+width,y},{x,y:y+height},{x:x-width,y},{x,y:y-height}], targets=pasteTargets(map,clip,[...selectedLayerIds]);
+  const point=candidates.find(point=>canPaste(map,clip,point.x,point.y) && clip.layers.every((entry,i)=>entry.cells.every(part=>!targets[i].cells[(point.y+part.y)*map.width+point.x+part.x])));
+  if (!point) { startPaste(); return; }
+  pendingPaste = {clip,layerIds:[...selectedLayerIds]}; commitPaste(point);
+}
+function zoomToSelection() {
+  const bounds = selectionBounds(map,selection); if (!bounds) return;
+  const {width,height} = viewport.getBoundingClientRect();
+  zoom = Math.max(.05,Math.min(4,(width-96)/(bounds.width*TILE),(height-170)/(bounds.height*TILE)));
+  pan = {x:width/2-(bounds.x+bounds.width/2)*TILE*zoom,y:40+(height-170)/2-(bounds.y+bounds.height/2)*TILE*zoom}; requestRender();
+}
 function gridChanged(fit = false) {
   selectedLayerIds = new Set([...selectedLayerIds].filter(id => map.layers.some(layer => layer.id === id)));
   const foundLayer = map.layers.findIndex(layer => layer.id === activeLayerId && selectedLayerIds.has(layer.id)), groupedLayer = map.layers.findIndex(layer => selectedLayerIds.has(layer.id));
@@ -485,6 +546,7 @@ canvas.addEventListener('pointerdown', event => {
   canvas.setPointerCapture(event.pointerId);
   if (event.button === 1 || spaceHeld || (!inBounds(map, point.x, point.y) && event.button === 0)) { pointer = { mode: 'pan', start: point, origin: { ...pan } }; viewport.style.cursor = 'grabbing'; return; }
   if (!inBounds(map, point.x, point.y)) return;
+  if (pendingPaste && event.button === 0) { commitPaste(point); return; }
   if (tool !== 'picker' && !canEditProject()) return;
   if (tool === 'move-map') { if (event.button === 0) { pointer = { mode: 'move-map', start: point, last: point }; viewport.style.cursor = 'move'; requestRender(); } return; }
   if (tool === 'select' && event.button === 0) {
@@ -562,7 +624,43 @@ async function openMapFile(file) {
   await installMap(candidate); notify('Map opened.');
 }
 function managedOrActivePackId() { return $('tileset-manager-dialog').open ? managingPackId : activePack; }
+function syncImportMode(editing) {
+  $('import-title').textContent = editing ? 'Edit tile regions' : 'Import tiles';
+  document.querySelector('#import-form button[type=submit]').textContent = editing ? 'Save regions' : 'Import tiles';
+  $('tile-files').closest('label').hidden = editing; $('load-pack').hidden = editing;
+  document.querySelector('#import-dialog .import-mode').hidden = editing || policy.edition === 'web';
+  $('free-import-rules').hidden = editing || policy.edition !== 'web';
+  $('edit-source-label').hidden = !editing;
+}
+async function openRegionEditor(packId,importId,sourceId = null) {
+  const pack = availableCustomPacks().find(pack=>pack.id===packId), group = pack && tilesetImports(pack).find(group=>group.id===importId);
+  if (!group) return;
+  const sources = pack.images.filter(image=>group.tiles.some(id=>pack.tiles.find(tile=>tile.id===id)?.image===image.id)), source = sources.find(image=>image.id===sourceId) || sources[0];
+  const definitions = pack.tiles.filter(tile=>group.tiles.includes(tile.id) && tile.image===source.id);
+  if (policy.edition==='web' && (source.width>160 || source.height>160)) { notify(FREE_UPGRADE,true); return; }
+  const [width,height] = baseTileSize(definitions[0]); assertTileSetup(policy,width,height);
+  finishStroke(); importGeneration++; regionEdit = {packId,importId,imageId:source.id}; importTargetId=packId;
+  importImages = [{...source,name:group.name,filename:group.name,image:customImages.get(source.data)||await loadImage(source.data),originalWidth:source.width,originalHeight:source.height}];
+  customImages.set(source.data,importImages[0].image);
+  const {spacing:gap,margin}=inferSheetGrid(definitions);
+  $('tile-width').value=width; $('tile-height').value=height; $('free-tile-size').value=width; $('tile-spacing').value=gap; $('tile-margin').value=margin;
+  document.querySelector('input[name=mode][value=sheet]').checked=true; $('tile-files').required=false;
+  $('edit-source').replaceChildren(...sources.map((image,i)=>new Option(sources.length===1?group.name:`Image ${i+1}`,image.id))); $('edit-source').value=source.id;
+  $('edit-source-label').hidden = sources.length<2; syncImportMode(true); $('edit-source-label').hidden = sources.length<2;
+  $('import-target').textContent=pack.name; updateImportPreview();
+  importRegions=definitions.filter(tile=>tile.footprint && tile.footprint.some(n=>n>1)).map(tile=>[Math.round((tile.rect[0]-margin)/(width+gap)),Math.round((tile.rect[1]-margin)/(height+gap)),...tile.footprint]); updateImportPreview();
+  if (!$('import-dialog').open) $('import-dialog').showModal();
+}
+$('edit-source').onchange = () => { if (regionEdit) openRegionEditor(regionEdit.packId,regionEdit.importId,$('edit-source').value).catch(showError); };
+function saveRegions() {
+  const editing=regionEdit, entries=sheetBrushes();
+  const result=replaceImportRegions(history,editing.packId,editing.importId,editing.imageId,entries);
+  publishLibrary(libraryFromProject(sharedLibrary,map)); rebuildLibrary();
+  if (tiles.get(selected)?.hidden) { selected=result[0].id;rotation=0;flip=false; }
+  updateBrush(); changed(); $('import-dialog').close(); regionEdit=null; notify('Tile regions saved.');
+}
 function openImport(keepImages = false) {
+  regionEdit = null; syncImportMode(false);
   const pack = availableCustomPacks().find(pack => pack.id === managedOrActivePackId());
   if (!pack) { notify('Create or select a custom tileset first.'); return; }
   if (importCount(pack) >= policy.maxImports) { notify(`Free allows 2 image imports per tileset. ${FREE_UPGRADE}`, true); return; }
@@ -640,6 +738,7 @@ function updateImportPreview() {
   } catch (error) { $('import-status').textContent = error.message; }
 }
 async function importPack() {
+  if (regionEdit) { saveRegions(); return; }
   if (!importImages.length) throw new Error('Choose an image first.');
   const sheetMode = document.querySelector('input[name=mode]:checked').value === 'sheet';
   if (policy.edition === 'web' && !sheetMode) throw new Error(`Free imports use a 16×16 or 32×32 sprite-sheet setup. ${FREE_UPGRADE}`);
@@ -702,12 +801,13 @@ function updateResizeWarning() {
 }
 function syncExportSettings() {
   const s = map.settings;
+  $('export-format').value = s.exportFormat; $('jpeg-quality').value = Math.round(s.jpegQuality*100);
   $('export-size').value = s.pixelsPerCell; $('export-grid').checked = s.exportGrid; $('export-transparent').checked = s.transparent;
   $('print-cell-size').value = s.cellInches; $('print-dpi').value = s.printDpi; $('print-paper').value = s.paper; $('print-orientation').value = s.orientation; $('print-grid').checked = s.printGrid; $('print-background').checked = s.printBackground;
   exportDimensions();
 }
 function readExportSettings() {
-  return { pixelsPerCell: Number($('export-size').value), exportGrid: $('export-grid').checked, transparent: $('export-transparent').checked, cellInches: Number($('print-cell-size').value), printDpi: Number($('print-dpi').value), paper: $('print-paper').value, orientation: $('print-orientation').value, printGrid: $('print-grid').checked, printBackground: $('print-background').checked, gridDefaultsVersion: 1 };
+  return { exportFormat: $('export-format').value, jpegQuality: Number($('jpeg-quality').value)/100, pixelsPerCell: Number($('export-size').value), exportGrid: $('export-grid').checked, transparent: $('export-transparent').checked, cellInches: Number($('print-cell-size').value), printDpi: Number($('print-dpi').value), paper: $('print-paper').value, orientation: $('print-orientation').value, printGrid: $('print-grid').checked, printBackground: $('print-background').checked, gridDefaultsVersion: 1 };
 }
 function saveExportSettings() {
   const settings = validateMap({ ...createMap(4, 4), settings: readExportSettings() }).settings;
@@ -718,6 +818,12 @@ function openMapSettings() {
   $('map-settings-dialog').showModal();
 }
 function exportDimensions() {
+  const jpeg = $('export-format').value === 'jpeg';
+  $('jpeg-quality-row').hidden = !jpeg; $('jpeg-quality-value').textContent = $('jpeg-quality').value+'%';
+  $('export-transparent').disabled = jpeg; $('export-transparent').closest('label').hidden = jpeg;
+  $('export-submit').textContent = jpeg ? 'Download JPEG' : 'Download PNG';
+  clearTimeout(exportEstimateTimer); const generation = ++exportEstimateGeneration;
+  if ($('export-dialog').open) { $('export-file-size').textContent = 'Calculating file size…'; exportEstimateTimer = setTimeout(async()=>{ try { const blob = await encodeMapImage(readExportSettings()); if (generation===exportEstimateGeneration && $('export-dialog').open) $('export-file-size').textContent = blob.size<1048576 ? (blob.size/1024).toFixed(0)+' KB' : (blob.size/1048576).toFixed(1)+' MB'; } catch { if (generation===exportEstimateGeneration) $('export-file-size').textContent = ''; } },350); }
   const px = Number($('export-size').value), w = map.width * px, h = map.height * px;
   $('export-dimensions').textContent = `${w.toLocaleString()} × ${h.toLocaleString()} pixels`;
   try {
@@ -739,14 +845,18 @@ function renderRegion(startX, startY, width, height, pixels, options) {
   if (options.grid) drawGrid(context, width, height, pixels, options.print ? '#777777' : '#acb5bf80');
   return output;
 }
+async function encodeMapImage(settings) {
+  const pixels = settings.pixelsPerCell, w = map.width*pixels, h = map.height*pixels;
+  if (w>8192 || h>8192 || w*h>36_000_000) throw new Error('Export is too large. Choose fewer pixels per cell (max 8192 px per side and 36 megapixels).');
+  const jpeg = settings.exportFormat==='jpeg', output = renderRegion(0,0,map.width,map.height,pixels,{grid:settings.exportGrid,transparent:!jpeg && settings.transparent});
+  if (policy.edition==='web') await addFreePNGWatermark(output,pixels);
+  const blob = await new Promise(resolve=>output.toBlob(resolve,jpeg?'image/jpeg':'image/png',settings.jpegQuality));
+  if (!blob) throw new Error('The browser could not create this image. Try a smaller export.');
+  return blob;
+}
 async function exportPNG() {
-  finishStroke(); const pixels = map.settings.pixelsPerCell, w = map.width * pixels, h = map.height * pixels;
-  if (w > 8192 || h > 8192 || w * h > 36_000_000) throw new Error('Export is too large. Choose fewer pixels per cell (max 8192 px per side and 36 megapixels).');
-  const output = renderRegion(0, 0, map.width, map.height, pixels, { grid: map.settings.exportGrid, transparent: map.settings.transparent });
-  if (policy.edition === 'web') await addFreePNGWatermark(output, pixels);
-  const blob = await new Promise(resolve => output.toBlob(resolve, 'image/png'));
-  if (!blob) throw new Error('The browser could not create this PNG. Try a smaller export.');
-  download(blob, `${safeName(map.name)}.png`); $('export-dialog').close();
+  finishStroke(); const blob = await encodeMapImage(map.settings);
+  download(blob,safeName(map.name)+(map.settings.exportFormat==='jpeg'?'.jpg':'.png')); $('export-dialog').close();
 }
 
 for (const button of $('tools').children) button.onclick = () => setTool(button.dataset.tool);
@@ -764,6 +874,9 @@ $('undo').onclick = () => { finishStroke(); if (history.undo()) gridChanged(); }
 $('redo').onclick = () => { finishStroke(); if (history.redo()) gridChanged(); };
 $('clear-selection').onclick = () => { finishStroke(); selection.clear(); updateBrush(); requestRender(); };
 $('delete-selection').onclick = () => { finishStroke(); applySelection('delete'); };
+$('copy-selection').onclick = () => captureSelection();
+$('duplicate-selection').onclick = duplicateSelection;
+$('zoom-selection').onclick = zoomToSelection;
 $('grid-toggle').onclick = () => { grid = !grid; $('grid-toggle').classList.toggle('active', grid); $('grid-toggle').setAttribute('aria-pressed', grid); requestRender(); };
 $('zoom-in').onclick = () => zoomAt(1.25); $('zoom-out').onclick = () => zoomAt(.8); $('zoom-reset').onclick = () => zoomAt(1 / zoom); $('fit-map').onclick = fitMap;
 $('map-name').oninput = () => { map.name = $('map-name').value.trim() || 'Untitled dungeon'; updateName(); changed(); };
@@ -773,7 +886,25 @@ $('open-map').onclick = () => { finishStroke(); $('map-file').click(); };
 $('save-map').onclick = saveMap;
 $('map-file').onchange = async event => { try { await openMapFile(event.target.files[0]); } catch (error) { showError(error); } finally { event.target.value = ''; } };
 $('map-settings').onclick = () => openMapSettings();
-$('export-map').onclick = () => { finishStroke(); syncExportSettings(); $('export-dialog').showModal(); };
+let pendingRestoreSnapshot = null;
+async function renderRecoveryList() {
+  const snapshots = await recovery.list(map.seed); $('recovery-list').replaceChildren(); $('no-recovery').hidden=!!snapshots.length;
+  for (const snapshot of snapshots) {
+    const row=document.createElement('div'); row.className='recovery-row';
+    const label=document.createElement('span'); label.textContent=new Date(snapshot.time).toLocaleString()+' · '+snapshot.label;
+    const restore=document.createElement('button');restore.type='button';restore.textContent='Restore';restore.onclick=()=>{pendingRestoreSnapshot=snapshot;$('restore-snapshot-dialog').showModal();};
+    row.append(label,restore);$('recovery-list').append(row);
+  }
+}
+$('open-recovery').onclick = async()=>{try{finishStroke();await renderRecoveryList();$('recovery-dialog').showModal();}catch(error){showError(error);}};
+$('save-snapshot').onclick = async()=>{try{await recovery.checkpoint(map,'Manual',true);await renderRecoveryList();notify('Snapshot saved.');}catch(error){showError(error);}};
+$('restore-snapshot-form').onsubmit = async event=>{
+  event.preventDefault();const snapshot=pendingRestoreSnapshot;if(!snapshot)return;const button=event.submitter;button.disabled=true;
+  try{const candidate=validateMap(JSON.parse(snapshot.data),builtinTiles.map(tile=>tile.id));await installMap(candidate);$('restore-snapshot-dialog').close();$('recovery-dialog').close();$('map-settings-dialog').close();notify('Snapshot restored.');}
+  catch(error){showError(error);}finally{button.disabled=false;pendingRestoreSnapshot=null;}
+};
+$('restore-snapshot-dialog').addEventListener('close',()=>{pendingRestoreSnapshot=null;});
+$('export-map').onclick = () => { finishStroke(); syncExportSettings(); $('export-dialog').showModal(); exportDimensions(); };
 $('print-map').onclick = () => { finishStroke(); syncExportSettings(); $('print-dialog').showModal(); };
 for (const input of document.querySelectorAll('#export-form input, #export-form select, #print-form input, #print-form select')) input.addEventListener('input', exportDimensions);
 $('resize-form').onsubmit = event => { event.preventDefault(); if (!canEditProject()) return; try { finishStroke(); let modified = resizeMap(history, Number($('resize-width').value), Number($('resize-height').value), 'top-left', $('resize-crop').checked); const color = $('map-background').value; if (map.background !== color) { map.background = color; modified = true; } if (modified) gridChanged(true); $('map-settings-dialog').close(); } catch (error) { notify(error.message, true); } };
@@ -834,7 +965,8 @@ function renderImports() {
       $('delete-import-warning').textContent = `Remove “${group.name}” from “${pack.name}”? Tiles already placed on the map will stay. Undo restores this import.`;
       $('delete-import-dialog').showModal();
     };
-    row.append(preview, name, button); $('import-list').append(row);
+    const edit = document.createElement('button'); edit.type='button'; edit.textContent='Edit'; edit.setAttribute('aria-label',`Edit regions ${group.name}`); edit.onclick=()=>openRegionEditor(pack.id,group.id).catch(showError);
+    row.append(preview, name, edit, button); $('import-list').append(row);
   }
 }
 function renderTilesetManager() {
@@ -973,6 +1105,7 @@ viewport.addEventListener('drop', async event => {
 document.addEventListener('keydown', event => {
   const editing = ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName), modal = !!document.querySelector('dialog[open]'), key = event.key.toLowerCase(), modifier = event.ctrlKey || event.metaKey;
   if (modal || editing || shapeMenu.open || layerMenu.isOpen || !map) return;
+  if (modifier && ['c','x','v','d'].includes(key) && (tool==='select' || key==='v')) { event.preventDefault(); if (key==='v') startPaste(); else if (key==='d') duplicateSelection(); else captureSelection(key==='x'); return; }
   if (modifier && ['s', 'o', 'z', 'y', 'a'].includes(key)) {
     event.preventDefault();
     if (key === 'a') { setTool('select'); selection = new Set(selectionInLayers(map, selectedLayerIds, 0, 0, map.width - 1, map.height - 1)); updateBrush(); requestRender(); }
@@ -990,7 +1123,7 @@ document.addEventListener('keydown', event => {
   if (shortcuts[key]) setTool(shortcuts[key]);
   else if (key === 'r') $('rotate-brush').click(); else if (key === 'f') $('flip-brush').click(); else if (key === 'v') $('grid-toggle').click();
   else if (key === '0') fitMap(); else if (key === '+' || key === '=') zoomAt(1.25); else if (key === '-') zoomAt(.8);
-  else if (key === 'escape') { if (pointer) finishStroke(true); else if (tool === 'move-map') setTool('select'); else { selection.clear(); updateBrush(); requestRender(); } } else if (key === '?') $('help').click();
+  else if (key === 'escape') { if (pendingPaste) { pendingPaste=null; requestRender(); } else if (pointer) finishStroke(true); else if (tool === 'move-map') setTool('select'); else { selection.clear(); updateBrush(); requestRender(); } } else if (key === '?') $('help').click();
 });
 document.addEventListener('keyup', event => { if (event.code === 'Space') { spaceHeld = false; viewport.style.cursor = pointer?.mode === 'pan' ? 'grabbing' : tool === 'move-map' ? 'move' : 'crosshair'; requestRender(); } });
 window.addEventListener('beforeunload', event => { if (dirty && $('save-state').textContent !== 'Saved locally in this browser') { event.preventDefault(); event.returnValue = ''; } });

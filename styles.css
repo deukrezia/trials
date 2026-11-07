@@ -446,3 +446,15 @@ kbd, .tool-group kbd { font-size: 12px; }
 #shape-size-dialog .dialog-actions { padding-top: 14px; margin-top: 12px; }
 #group-tiles-hint { padding: 0 10px; font-size: 12px; }
 #shape-size-dialog::backdrop { background: #100c1825; }
+
+#selection-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#selection-actions button { min-width: 0; font-size: 12px; padding: 8px 5px; }
+#jpeg-quality-row { display: grid; grid-template-columns: 1fr auto; }
+#jpeg-quality { grid-column: 1 / -1; padding: 0; accent-color: #d6b778; }
+#export-file-size { min-height: 1em; font-size: 12px; }
+#recovery-list { margin-top: 18px; }
+.recovery-row { display: flex; gap: 12px; align-items: center; border-top: 1px solid #62506f; padding: 12px 0; }
+.recovery-row span { flex: 1; font-size: 12px; line-height: 1.7; }
+.recovery-row button { font-size: 12px; }
+.import-row { display: grid; grid-template-columns: 64px minmax(0,1fr) auto auto; }
+@media (max-width: 650px) { .import-row { grid-template-columns: 48px minmax(0,1fr); } .import-row button { grid-row: 2; } }

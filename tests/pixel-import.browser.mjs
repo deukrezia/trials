@@ -53,9 +53,9 @@ test('32px imports stay crisp and repeated imports append to the selected custom
     const beforeRemoval = structuredClone(map);
     await openTilesets(page); assert.equal(await page.locator('.import-row').count(), 2);
     await mkdir(fileURLToPath(new URL('../.test-output/', import.meta.url)), { recursive: true }); await page.screenshot({ path: fileURLToPath(new URL('../.test-output/import-manager.png', import.meta.url)) });
-    await page.locator('.import-row').first().getByRole('button').click(); assert.match(await page.locator('#delete-import-warning').textContent(), /already placed on the map will stay/);
+    await page.locator('.import-row').first().getByRole('button', { name: /^Remove import/ }).click(); assert.match(await page.locator('#delete-import-warning').textContent(), /already placed on the map will stay/);
     await page.locator('#delete-import-dialog').getByRole('button', { name: 'Cancel', exact: true }).click(); assert.equal(await page.locator('.import-row').count(), 2);
-    await page.locator('.import-row').first().getByRole('button').click(); await page.locator('#delete-import-form button[type=submit]').click(); assert.equal(await page.locator('.import-row').count(), 1);
+    await page.locator('.import-row').first().getByRole('button', { name: /^Remove import/ }).click(); await page.locator('#delete-import-form button[type=submit]').click(); assert.equal(await page.locator('.import-row').count(), 1);
     await closeTilesets(page);
     map = await saved(); assert.equal(map.packs.length, 1); assert.equal(map.packs[0].id, firstId); assert.equal(map.packs[0].tiles.filter(tile => !tile.hidden).length, 2); assert.equal(map.packs[0].images.length, 2); assert.deepEqual(map.layers, beforeRemoval.layers);
     assert.deepEqual(await colors(page.locator('#map-canvas'), [Math.round(left - bounds.x + px + 4), Math.round(top - bounds.y + px + 4), px - 8, px - 8]), pure);

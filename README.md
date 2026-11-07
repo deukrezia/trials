@@ -17,13 +17,15 @@ Run **Start Trials.cmd**, or `npm.cmd start` and open http://127.0.0.1:4173. Nod
 | Source image imports per custom tileset | 2 | No edition cap |
 | Import image bounds | Top-left 160×160 pixels; excess cropped | Up to 8192 px per side |
 | Tile setup | 16×16 or 32×32 | Configurable sheet sizes or individual images |
-| PNG export | Faded pixel-font “Made using Trials Battlemap Maker” | No watermark |
+| PNG / JPEG export | Faded pixel-font “Made using Trials Battlemap Maker” | No watermark |
 | Print PDF | Physical grid sizes and pagination | Same |
 | Ads | Configurable small sponsor space | None |
 
 Buying/downloading the desktop app removes Free upload restrictions and allows 12 layers. General memory, file-size and output limits still apply. Existing projects above Free's layer cap remain viewable, saveable and exportable; content editing is blocked until the user explicitly reduces their layers. Extra library assets are retained for desktop use, never automatically deleted.
 
 ## Tilesets
+
+Default Tiles 2 is also bundled from the owner’s unchanged 112×128 image, using 16×16 cells. Fully transparent regions are omitted. Both default sets are available in every project and do not consume custom library slots.
 
 Default Tiles uses the supplied `Default Tiles.png`: 16×16 setup, 38 visible tiles grouped by similar artwork (water, ground, walls, edges, stonework, furnishings and fire). Fully transparent cells are skipped, including uploaded sheets; partial transparency is retained. Originals are not modified. Open **Manage tilesets → Free Tilesets → Kenney**, then use **+** beside Scribble or Tiny Dungeon. An installed pack shows **×** in the same place. Removing it preserves placed map artwork, and it can be added again later. The Kenney heading links to its site; a CC0 disclaimer appears below these actions. Help contains **Made by Lazarus**; the bottom-right support link is https://ko-fi.com/lazarus_.
 
@@ -39,7 +41,7 @@ For future defaults, add the original image and a descriptor in `assets/defaults
 
 Select is the first tool. Paint, Erase, Fill, Shape and Pick tile follow. Space/middle drag pans; scroll zooms. Right-click Shape for geometry options. Right-click layers for opacity, duplicate or delete; drag layers to reorder, topmost first. Ctrl/Cmd-click layers selects a group; Shift selects a range. Canvas selections move/delete/rotate/flip across those editable layers in one undo step. Choosing a palette tile resets brush transforms.
 
-**Move map (M)** drags all layer contents inside the fixed map; overflowing moves confirm before cropping. Map Settings changes dimensions/background. Dimensions appear beside Map Settings. PNG and Print PDF have separate dialogs, with grid lines on by default. The Free watermark appears only in PNG output, never on the editor canvas or PDF.
+**Move map (M)** drags all layer contents inside the fixed map; overflowing moves confirm before cropping. Map Settings changes dimensions/background. Dimensions appear beside Map Settings. Image export (PNG/JPEG) and Print PDF have separate dialogs, with grid lines on by default. The Free watermark appears in PNG and JPEG output, never on the editor canvas or PDF.
 
 PNG supports 8–512 pixels per cell, up to 8192 px per side and 36 megapixels. Print PDF preserves physical cell sizes with A4/Letter paper, orientation, half-inch margins and pagination (up to 100 pages). Print at **Actual size / 100%**; printer-driver scaling is outside the app's control. PDF geometry has been independently checked with `tests/verify_print.py`; no physical printer has been calibrated.
 
@@ -76,3 +78,11 @@ Kenney credits/licenses are beside each optional pack. Silkscreen is bundled loc
 Large tiles: drag across the import preview to group a rectangular area into one asset. A 3×3 area of 16px cells becomes one 48×48 brush covering nine map cells. Clicking a marked area ungroups it. Large assets remain linked for selection, transforms and erasing; incomplete stamps at map edges are skipped. Ctrl/Cmd-click or Shift-click palette tiles to select a group, then drag to reorder.
 
 With Shape active, right-click the map to set width and height in cells and preview the shape centered on that cell. Place commits one undoable action; Cancel/Escape leaves the map unchanged. Right-click the Shape button to choose geometry or outline.
+
+Selection clipboard: Ctrl/Cmd+C copies, X cuts, V previews a paste (click to place; Escape cancels), and D duplicates into nearby free space or opens placement if none fits. Clipboard edits respect selected visible/unlocked layers, preserve linked large assets and transforms, and are undoable. Copied custom art remains available for pasting across projects in the same session, even after library removal. Copy, Duplicate and Zoom to selection appear with the existing selection actions.
+
+In Manage tilesets, use Edit on an import to regroup its source cells after importing. Save regions changes the shared palette without consuming another import slot; old definitions used on maps remain embedded.
+
+Export offers PNG or JPEG. JPEG uses the map background, has a 50–100% quality control and shows the encoded file size. PNG keeps optional transparency. Free image exports carry the existing faded watermark; paid image exports do not. WebP export is not included.
+
+Map settings → Recovery snapshots keeps local automatic checkpoints (at most once every two minutes when edits autosave), manual snapshots and a checkpoint before switching/restoring. Up to 12 snapshots per map are retained within a shared 96 MB / 48-entry budget. Restore saves the current state first. This is local recovery, separate from file backups; clearing browser/app storage removes it. No recent-maps screen is included.

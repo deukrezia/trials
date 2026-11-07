@@ -6,7 +6,7 @@ export const MAX_LAYERS = 12;
 export const MAX_TILES = 4096;
 export const MAX_EMBEDDED_BYTES = 48 * 1024 * 1024;
 const clone = value => structuredClone(value);
-export const defaultSettings = () => ({ pixelsPerCell: 64, exportGrid: true, transparent: false, cellInches: 1, printDpi: 150, paper: 'a4', orientation: 'portrait', printGrid: true, printBackground: false, gridDefaultsVersion: 1 });
+export const defaultSettings = () => ({ pixelsPerCell: 64, exportGrid: true, transparent: false, exportFormat: 'png', jpegQuality: .9, cellInches: 1, printDpi: 150, paper: 'a4', orientation: 'portrait', printGrid: true, printBackground: false, gridDefaultsVersion: 1 });
 
 export function createMap(width = 40, height = 30, name = 'Untitled dungeon') {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 4 || height < 4 || width > 200 || height > 200 || width * height > MAX_CELLS) throw new Error('Use map dimensions from 4 to 200 cells.');
@@ -335,6 +335,7 @@ export function validateMap(input, builtinIds = []) {
     if (input.settings && input.settings.gridDefaultsVersion !== 1) { s.exportGrid = true; s.printGrid = true; s.gridDefaultsVersion = 1; }
     if (!input.settings || typeof input.settings !== 'object' || Array.isArray(input.settings) || !Number.isInteger(s.pixelsPerCell) || s.pixelsPerCell < 8 || s.pixelsPerCell > 512 || !Number.isFinite(s.cellInches) || s.cellInches < .25 || s.cellInches > 2 || ![100, 150, 300].includes(s.printDpi) || !['a4', 'letter'].includes(s.paper) || !['portrait', 'landscape'].includes(s.orientation) || !['exportGrid', 'transparent', 'printGrid', 'printBackground'].every(key => typeof s[key] === 'boolean')) throw new Error('Invalid map export settings.');
     map.settings = Object.fromEntries(Object.keys(defaultSettings()).map(key => [key, s[key]]));
+    if (!['png','jpeg'].includes(s.exportFormat) || !Number.isFinite(s.jpegQuality) || s.jpegQuality < .5 || s.jpegQuality > 1) throw new Error('Invalid image export format or quality.');
   }
   if (input.packNames !== undefined) {
     if (!input.packNames || typeof input.packNames !== 'object' || Array.isArray(input.packNames) || Object.keys(input.packNames).length > 256) throw new Error('Invalid tileset names.');
