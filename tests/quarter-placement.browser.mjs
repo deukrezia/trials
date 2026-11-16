@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 import { createMap, placement } from '../src/model.js';
 
-test('the right panel switches paint and erase between full cells and individual quarters', { timeout: 120000 }, async () => {
+test('Quarter snaps full-size brushes to half-cell positions and preserves older quarter-size artwork', { timeout: 120000 }, async () => {
   const root = fileURLToPath(new URL('../', import.meta.url));
   const server = spawn(process.execPath, ['scripts/serve.mjs'], {
     cwd: root, env: { ...process.env, PORT: '4200' }, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe']
@@ -25,6 +25,7 @@ test('the right panel switches paint and erase between full cells and individual
     const sections = page.locator('#inspector > section');
     assert.deepEqual(await sections.evaluateAll(nodes => nodes.map(node => node.className)),
       ['brush-section', 'placement-section', 'layers-section']);
+    assert.equal(await page.locator('.placement-section h2').count(), 0);
     const full = page.getByRole('button', { name: 'Full', exact: true });
     const quarter = page.getByRole('button', { name: 'Quarter', exact: true });
     assert.equal(await full.getAttribute('aria-pressed'), 'true');
@@ -42,6 +43,8 @@ test('the right panel switches paint and erase between full cells and individual
       images: [{ id: 'sheet', width: 32, height: 16, data: 'data:image/png;base64,' + PNG.sync.write(sheet).toString('base64') }],
       tiles: [red, blue].map((id, i) => ({ id, name: id, image: 'sheet', rect: [i * 16, 0, 16, 16], pixelArt: true }))
     });
+    map.layers[0].cells[9] = { quarters: [placement(blue), null, null, null] };
+    map.layers[0].cells[45] = placement(red);
     const openMap = async value => {
       await page.locator('#map-file').setInputFiles({ name: 'quarter.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(value)) });
       await page.waitForFunction(name => document.querySelector('#map-name').value === name, value.name);
@@ -67,12 +70,17 @@ test('the right panel switches paint and erase between full cells and individual
     await page.mouse.move(...point(3.25, 2.25));
     await page.mouse.up();
     await page.mouse.click(...point(2.75, 2.75));
+    await page.mouse.click(...point(4.75, 4.75));
+    await page.mouse.click(...point(7.75, 7.75));
     const painted = await saveMap();
-    assert.deepEqual(painted.layers[0].cells[18], { ...placement(red), quarters: [placement(blue), placement(blue), null, placement(blue)] });
-    assert.deepEqual(painted.layers[0].cells[19], { quarters: [placement(blue), null, null, null] });
+    const snappedBlue = { ...placement(blue), offset: true };
+    assert.deepEqual(painted.layers[0].cells[18], { ...placement(red), quarters: [snappedBlue, snappedBlue, null, snappedBlue] });
+    assert.deepEqual(painted.layers[0].cells[19], { quarters: [snappedBlue, null, null, null] });
+    assert.deepEqual(painted.layers[0].cells[36], { quarters: [null, null, null, snappedBlue] });
+    assert.equal(painted.layers[0].cells[63], null);
     await page.getByRole('button', { name: 'Erase', exact: true }).click();
     await page.mouse.click(...point(2.25, 2.25));
-    assert.deepEqual((await saveMap()).layers[0].cells[18], { ...placement(red), quarters: [null, placement(blue), null, placement(blue)] });
+    assert.deepEqual((await saveMap()).layers[0].cells[18], { ...placement(red), quarters: [null, snappedBlue, null, snappedBlue] });
     await page.locator('#undo').click();
     assert.deepEqual((await saveMap()).layers, painted.layers);
     await openMap({ ...painted, name: 'Quarter brush saved' });
@@ -86,9 +94,15 @@ test('the right panel switches paint and erase between full cells and individual
     const pixel = (x, y) => [...png.data.subarray((y * png.width + x) * 4, (y * png.width + x) * 4 + 4)];
     assert.deepEqual(pixel(33, 33), [0, 0, 255, 255]);
     assert.deepEqual(pixel(41, 33), [0, 0, 255, 255]);
-    assert.deepEqual(pixel(33, 41), [255, 0, 0, 255]);
+    assert.deepEqual(pixel(33, 41), [0, 0, 255, 255]);
     assert.deepEqual(pixel(41, 41), [0, 0, 255, 255]);
-    assert.deepEqual(pixel(55, 42), [0, 0, 0, 0]);
+    assert.deepEqual(pixel(55, 42), [0, 0, 255, 255]);
+    assert.deepEqual(pixel(72, 72), [0, 0, 255, 255]);
+    assert.deepEqual(pixel(87, 87), [0, 0, 255, 255]);
+    assert.deepEqual(pixel(88, 87), [255, 0, 0, 255]);
+    assert.deepEqual(pixel(71, 72), [0, 0, 0, 0]);
+    assert.deepEqual(pixel(23, 23), [0, 0, 255, 255]);
+    assert.deepEqual(pixel(24, 23), [0, 0, 0, 0]);
     assert.deepEqual(errors, []);
   } finally {
     if (browser) await browser.close();

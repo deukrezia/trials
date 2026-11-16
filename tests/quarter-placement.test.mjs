@@ -6,7 +6,7 @@ import { emptyLibrary, projectWithLibrary } from '../src/library.js';
 
 test('quarter edits preserve other corners and base artwork through undo, rotation and a saved-map round trip', () => {
   const map = createMap(8, 8), history = new History(map);
-  const base = placement('floor'), lamp = placement('lamp', 1, true), rug = placement('rug');
+  const base = placement('floor'), lamp = { ...placement('lamp', 1, true), offset: true }, rug = placement('rug');
   history.begin(0);
   history.stamp(1, 1, base);
   history.setQuarter(2, 2, lamp);
@@ -22,9 +22,9 @@ test('quarter edits preserve other corners and base artwork through undo, rotati
   assert.deepEqual(map.layers[0].cells[9], { ...base, quarters: [null, null, null, rug] });
   history.undo();
   transformSelection(history, 0, [9], 'rotate');
-  assert.deepEqual(map.layers[0].cells[9].quarters, [null, placement('lamp', 2, true), placement('rug', 1), null]);
+  assert.deepEqual(map.layers[0].cells[9].quarters, [null, { ...placement('lamp', 2, true), offset: true }, placement('rug', 1), null]);
   shiftMap(history, 1, 0);
-  assert.deepEqual(map.layers[0].cells[10].quarters, [null, placement('lamp', 2, true), placement('rug', 1), null]);
+  assert.deepEqual(map.layers[0].cells[10].quarters, [null, { ...placement('lamp', 2, true), offset: true }, placement('rug', 1), null]);
 });
 
 test('custom tiles used only in a quarter survive library removal and cross-map paste', () => {

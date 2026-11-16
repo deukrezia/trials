@@ -46,11 +46,10 @@
       <section class="brush-section"><div class="selected-preview"><canvas id="brush-preview" width="144" height="144"></canvas></div><strong id="selected-name">Tile</strong>
         <div id="selection-actions" hidden><button id="copy-selection" title="Copy (Ctrl+C)">Copy</button><button id="duplicate-selection" title="Duplicate (Ctrl+D)">Duplicate</button><button id="zoom-selection" title="Zoom to selection">Zoom to</button><button id="delete-selection" title="Delete selection (Delete)">Delete</button><button id="clear-selection" title="Clear selection (Escape)">Deselect</button></div><div class="transform-controls"><button id="rotate-brush" title="Rotate clockwise (R)"><span>Rotate</span><span id="rotation-label">0°</span><kbd>R</kbd></button><button id="flip-brush" title="Flip horizontally (F)" aria-pressed="false"><span>Flip</span><kbd>F</kbd></button></div>
       </section>
-      <section class="placement-section" aria-labelledby="placement-title">
-        <div class="section-heading"><h2 id="placement-title">Placement</h2></div>
-        <div class="placement-options" role="group" aria-labelledby="placement-title">
+      <section class="placement-section" aria-label="Tile snapping">
+        <div class="placement-options" role="group" aria-label="Tile snapping">
           <button id="place-full" type="button" class="active" aria-pressed="true">Full</button>
-          <button id="place-quarter" type="button" aria-pressed="false" title="Snap one tile to a quarter of a cell">Quarter</button>
+          <button id="place-quarter" type="button" aria-pressed="false" title="Snap a full-size tile in half-cell steps">Quarter</button>
         </div>
       </section>
       <section class="layers-section"><div class="section-heading"><h2>Layers</h2><button id="layer-limit-info" type="button" class="quiet-button" data-edition-details title="Free supports 6 layers" hidden>Limit</button><button id="add-layer" type="button" aria-label="Add layer" title="Add layer">+</button></div><div id="layers" class="layer-list"></div></section>

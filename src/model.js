@@ -16,7 +16,7 @@ export function createMap(width = 40, height = 30, name = 'Untitled dungeon') {
 
 export function sameTile(a, b) {
   if (a === b) return true;
-  if (!a || !b || a.tile !== b.tile || a.rotation !== b.rotation || a.flip !== b.flip
+  if (!a || !b || a.tile !== b.tile || a.rotation !== b.rotation || a.flip !== b.flip || a.offset !== b.offset
     || a.instance !== b.instance || JSON.stringify(a.part) !== JSON.stringify(b.part)) return false;
   if (!a.quarters || !b.quarters) return a.quarters === b.quarters;
   return a.quarters.every((tile, i) => sameTile(tile, b.quarters[i]));
@@ -435,7 +435,9 @@ export function validateMap(input, builtinIds = []) {
       if (w < 1 || h < 1 || w > 200 || h > 200 || x < 0 || y < 0 || x >= w || y >= h) throw new Error('Invalid large tile source cell.');
       return { ...placement(cell.tile, cell.rotation, cell.flip), instance: cell.instance, part: [...cell.part] };
     }
-    return placement(cell.tile, cell.rotation, cell.flip);
+    const tile = placement(cell.tile, cell.rotation, cell.flip);
+    if (quarter && cell.offset === true) tile.offset = true;
+    return tile;
   }
   const layerIds = new Set();
   map.layers = input.layers.map((layer, i) => {
