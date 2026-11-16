@@ -1,4 +1,5 @@
-import { createMap, validateMap, libraryPacks, libraryTiles, exportablePack } from './model.js';
+import { createMap, validateMap, libraryPacks, libraryTiles, exportablePack, placedTileIds } from './model.js';
+import { cellPlacements } from './quarter-cell.js';
 
 const clone = value => structuredClone(value);
 export const emptyLibrary = () => ({ format: 'vtt-tile-library', version: 1, packs: [], packNames: {}, packDescriptions: {}, enabledOptional: [], removedPacks: [], removedTiles: [], tileOrders: {} });
@@ -64,7 +65,7 @@ export function adoptProjectLibrary(state, project) {
 }
 
 export function projectWithLibrary(state, project) {
-  const result = clone(project), used = new Set(result.layers.flatMap(layer => layer.cells.filter(Boolean).map(cell => cell.tile)));
+  const result = clone(project), used = placedTileIds(result);
   const sourcePacks = new Map(result.packs.map(pack => [pack.id, pack])), merged = [], imageComparisons = new Map();
   for (const source of result.packs) {
     const canonical = state.packs.find(pack => pack.id === source.id), pack = canonical ? clone(canonical) : { ...source, hidden: true, tiles: [], images: [], imports: [] };
@@ -74,7 +75,9 @@ export function projectWithLibrary(state, project) {
       const retained = { ...tile, hidden: true }, image = source.images.find(image => image.id === tile.image);
       if (existing) {
         retained.id = `${source.id}:retained-${crypto.randomUUID()}`;
-        for (const layer of result.layers) for (const cell of layer.cells) if (cell?.tile === tile.id) cell.tile = retained.id;
+        for (const layer of result.layers) for (const cell of layer.cells) {
+          for (const placed of cellPlacements(cell)) if (placed.tile === tile.id) placed.tile = retained.id;
+        }
       }
       const oldImage = pack.images.find(item => item.id === image.id);
       if (oldImage && (oldImage.data !== image.data || oldImage.width !== image.width || oldImage.height !== image.height)) retained.image = `retained-${crypto.randomUUID()}`;

@@ -1,4 +1,5 @@
 import { stampParts, expandInstances, patternAnchors, rotatedFootprint, baseTileSize } from './multi-tile.js';
+import { cellBase, cellWithQuarters, cellPlacements, quarterIndex } from './quarter-cell.js';
 export const FORMAT = 'vtt-map-maker';
 export const VERSION = 1;
 export const MAX_CELLS = 40000;
@@ -13,7 +14,13 @@ export function createMap(width = 40, height = 30, name = 'Untitled dungeon') {
   return { format: FORMAT, version: VERSION, name, width, height, seed: Date.now(), background: '#383d39', packs: [], packNames: {}, packDescriptions: {}, settings: defaultSettings(), layers: ['Ground', 'Walls', 'Objects'].map((name, i) => ({ id: `layer-${i}`, name, visible: true, locked: false, opacity: 1, cells: Array(width * height).fill(null) })) };
 }
 
-export function sameTile(a, b) { return a === b || (!!a && !!b && a.tile === b.tile && a.rotation === b.rotation && a.flip === b.flip && a.instance === b.instance && JSON.stringify(a.part) === JSON.stringify(b.part)); }
+export function sameTile(a, b) {
+  if (a === b) return true;
+  if (!a || !b || a.tile !== b.tile || a.rotation !== b.rotation || a.flip !== b.flip
+    || a.instance !== b.instance || JSON.stringify(a.part) !== JSON.stringify(b.part)) return false;
+  if (!a.quarters || !b.quarters) return a.quarters === b.quarters;
+  return a.quarters.every((tile, i) => sameTile(tile, b.quarters[i]));
+}
 export function inBounds(map, x, y) { return x >= 0 && y >= 0 && x < map.width && y < map.height; }
 export function placement(tile, rotation = 0, flip = false) { return tile ? { tile, rotation: ((rotation % 4) + 4) % 4, flip: !!flip } : null; }
 export function* line(x0, y0, x1, y1) {
@@ -63,10 +70,26 @@ export class History {
     const layer = this.map.layers[this.pending.layerIndex];
     if (layer.locked || !layer.visible) return;
     const index = y * this.map.width + x;
-    if (sameTile(layer.cells[index], value)) return;
     const old = layer.cells[index];
-    if (old?.instance && old.instance !== value?.instance) layer.cells.forEach((cell, i) => { if (cell?.instance === old.instance) this.write(i, null); });
+    if (value && old?.quarters) value = cellWithQuarters(value, old.quarters);
+    if (sameTile(old, value)) return;
+    if (old?.instance && old.instance !== value?.instance) layer.cells.forEach((cell, i) => {
+      if (cell?.instance === old.instance) this.write(i, cellWithQuarters(null, cell.quarters));
+    });
     this.write(index, value);
+  }
+  setQuarter(qx, qy, value) {
+    if (!this.pending || !Number.isInteger(qx) || !Number.isInteger(qy)) return;
+    const x = Math.floor(qx / 2), y = Math.floor(qy / 2);
+    if (!inBounds(this.map, x, y)) return;
+    const layer = this.map.layers[this.pending.layerIndex];
+    if (layer.locked || !layer.visible || layer.opacity === 0) return;
+    const index = y * this.map.width + x, cell = layer.cells[index];
+    const quarters = cell?.quarters?.slice() || Array(4).fill(null);
+    const slot = quarterIndex(qx, qy);
+    if (sameTile(quarters[slot], value)) return;
+    quarters[slot] = value;
+    this.write(index, cellWithQuarters(cellBase(cell), quarters));
   }
   write(index, value) {
     const layer = this.map.layers[this.pending.layerIndex];
@@ -97,7 +120,7 @@ export class History {
   fill(x, y, value, size = [1, 1]) {
     if (!this.pending || !inBounds(this.map, x, y)) return;
     const cells = this.map.layers[this.pending.layerIndex].cells;
-    const target = clone(cells[y * this.map.width + x]);
+    const target = cellBase(cells[y * this.map.width + x]);
     if (sameTile(target, value)) return;
     const visited = new Set(), queue = [[x, y]], region = [];
     const matches = cell => cell === target || (!!cell && !!target && cell.tile === target.tile && cell.rotation === target.rotation && cell.flip === target.flip);
@@ -105,7 +128,7 @@ export class History {
       const [cx, cy] = queue[head], index = cy * this.map.width + cx;
       if (!inBounds(this.map, cx, cy) || visited.has(index)) continue;
       visited.add(index);
-      if (!matches(cells[index])) continue;
+      if (!matches(cellBase(cells[index]))) continue;
       region.push([cx, cy]);
       queue.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]);
     }
@@ -211,6 +234,15 @@ export function selectionInLayers(map, layerIds, x0, y0, x1, y1) {
   map.layers.forEach((layer, i) => { if (selected.has(layer.id) && layer.visible && layer.opacity !== 0 && !layer.locked) for (const index of selectionInRect(map, i, x0, y0, x1, y1)) indices.add(index); });
   return expandInstances(map.layers.filter(layer => selected.has(layer.id) && layer.visible && layer.opacity !== 0 && !layer.locked), indices);
 }
+function transformCell(cell, operation) {
+  const transform = tile => operation === 'rotate'
+    ? { ...tile, ...placement(tile.tile, tile.rotation + 1, tile.flip) }
+    : { ...tile, ...placement(tile.tile, -tile.rotation, !tile.flip) };
+  const base = cellBase(cell);
+  const order = operation === 'rotate' ? [2, 0, 3, 1] : [1, 0, 3, 2];
+  const quarters = cell.quarters && order.map(slot => cell.quarters[slot] && transform(cell.quarters[slot]));
+  return cellWithQuarters(base && transform(base), quarters);
+}
 export function transformLayersSelection(history, layerIds, indices, operation, dx = 0, dy = 0) {
   const map = history.map, selected = new Set(layerIds), layers = map.layers.filter(layer => selected.has(layer.id) && layer.visible && layer.opacity !== 0 && !layer.locked);
   if (!layers.length) throw new Error('Select an unlocked, visible layer.');
@@ -219,12 +251,12 @@ export function transformLayersSelection(history, layerIds, indices, operation, 
   if (!['move', 'rotate', 'flip', 'delete'].includes(operation) || !Number.isInteger(dx) || !Number.isInteger(dy)) throw new Error('Invalid selection transform.');
   const edits = layers.map(layer => ({ layer, active: active.filter(i => layer.cells[i]), transformed: operation === 'delete' ? [] : active.filter(i => layer.cells[i]).map(i => {
     const x = i % map.width - bounds.x, y = Math.floor(i / map.width) - bounds.y, cell = layer.cells[i];
-    if (operation === 'rotate') return { x: bounds.x + bounds.height - 1 - y, y: bounds.y + x, cell: { ...clone(cell), ...placement(cell.tile, cell.rotation + 1, cell.flip) } };
-    if (operation === 'flip') return { x: bounds.x + bounds.width - 1 - x, y: bounds.y + y, cell: { ...clone(cell), ...placement(cell.tile, -cell.rotation, !cell.flip) } };
+    if (operation === 'rotate') return { x: bounds.x + bounds.height - 1 - y, y: bounds.y + x, cell: transformCell(cell, operation) };
+    if (operation === 'flip') return { x: bounds.x + bounds.width - 1 - x, y: bounds.y + y, cell: transformCell(cell, operation) };
     return { x: bounds.x + x + dx, y: bounds.y + y + dy, cell: clone(cell) };
   }) }));
   if (edits.some(edit => edit.transformed.some(cell => !inBounds(map, cell.x, cell.y)))) throw new Error('The selection would leave the map. Enlarge the map or move it inward first.');
-  history.snapshot(() => { for (const edit of edits) { for (const i of edit.active) edit.layer.cells[i] = null; const hit = new Set(edit.transformed.map(cell => edit.layer.cells[cell.y * map.width + cell.x]?.instance).filter(Boolean)); edit.layer.cells.forEach((cell, i) => { if (cell?.instance && hit.has(cell.instance)) edit.layer.cells[i] = null; }); for (const cell of edit.transformed) edit.layer.cells[cell.y * map.width + cell.x] = clone(cell.cell); } });
+  history.snapshot(() => { for (const edit of edits) { for (const i of edit.active) edit.layer.cells[i] = null; const hit = new Set(edit.transformed.map(cell => edit.layer.cells[cell.y * map.width + cell.x]?.instance).filter(Boolean)); edit.layer.cells.forEach((cell, i) => { if (cell?.instance && hit.has(cell.instance)) edit.layer.cells[i] = cellWithQuarters(null, cell.quarters); }); for (const cell of edit.transformed) edit.layer.cells[cell.y * map.width + cell.x] = clone(cell.cell); } });
   return [...new Set(edits.flatMap(edit => edit.transformed.map(cell => cell.y * map.width + cell.x)))];
 }
 export function resizeOffset(map, width, height, anchor = 'top-left') {
@@ -270,7 +302,11 @@ export function deletePack(history, id) {
 
 export const libraryPacks = map => map.packs.filter(pack => !pack.hidden);
 export const libraryTiles = pack => pack.tiles.filter(tile => !tile.hidden);
-function placedTileIds(map) { const ids = new Set(); for (const layer of map.layers) for (const cell of layer.cells) if (cell) ids.add(cell.tile); return ids; }
+export function placedTileIds(map) {
+  const ids = new Set();
+  for (const layer of map.layers) for (const cell of layer.cells) for (const tile of cellPlacements(cell)) ids.add(tile.tile);
+  return ids;
+}
 export function exportablePack(pack) {
   const { hidden, ...data } = pack, tiles = libraryTiles(pack).map(({ hidden, ...tile }) => tile), sources = new Set(tiles.map(tile => tile.image));
   return { ...data, tiles, images: pack.images.filter(image => sources.has(image.id)), imports: tilesetImports(pack) };
@@ -389,6 +425,18 @@ export function validateMap(input, builtinIds = []) {
   });
   if (libraryPacks(map).length > 64) throw new Error('A map can contain at most 64 custom tilesets.');
   if (ids.size > builtinIds.length + MAX_TILES) throw new Error(`A map can contain at most ${MAX_TILES} imported tiles.`);
+  function validatePlacement(cell, quarter = false) {
+    if (cell === null) return null;
+    if (!cell || !ids.has(cell.tile) || !Number.isInteger(cell.rotation) || cell.rotation < 0 || cell.rotation > 3 || typeof cell.flip !== 'boolean') throw new Error('The map contains an invalid or missing tile.');
+    if (quarter && (cell.part !== undefined || cell.instance !== undefined || cell.quarters !== undefined)) throw new Error('Invalid quarter tile placement.');
+    if (cell.part !== undefined || cell.instance !== undefined) {
+      if (typeof cell.instance !== 'string' || !cell.instance || cell.instance.length > 100 || !Array.isArray(cell.part) || cell.part.length !== 4 || !cell.part.every(Number.isInteger)) throw new Error('Invalid large tile placement.');
+      const [x, y, w, h] = cell.part;
+      if (w < 1 || h < 1 || w > 200 || h > 200 || x < 0 || y < 0 || x >= w || y >= h) throw new Error('Invalid large tile source cell.');
+      return { ...placement(cell.tile, cell.rotation, cell.flip), instance: cell.instance, part: [...cell.part] };
+    }
+    return placement(cell.tile, cell.rotation, cell.flip);
+  }
   const layerIds = new Set();
   map.layers = input.layers.map((layer, i) => {
     if (!layer || typeof layer.visible !== 'boolean' || typeof layer.locked !== 'boolean' || !Array.isArray(layer.cells) || layer.cells.length !== map.width * map.height) throw new Error('Invalid map layer.');
@@ -396,15 +444,10 @@ export function validateMap(input, builtinIds = []) {
     if (typeof id !== 'string' || !id || id.length > 100 || layerIds.has(id) || typeof name !== 'string' || !name.trim() || name.length > 100 || ![0, .25, .5, .75, 1].includes(opacity)) throw new Error('Invalid layer name, ID, or opacity.');
     layerIds.add(id);
     return { id, name, visible: layer.visible, locked: layer.locked, opacity, cells: layer.cells.map(cell => {
-      if (cell === null) return null;
-      if (!cell || !ids.has(cell.tile) || !Number.isInteger(cell.rotation) || cell.rotation < 0 || cell.rotation > 3 || typeof cell.flip !== 'boolean') throw new Error('The map contains an invalid or missing tile.');
-      if (cell.part !== undefined || cell.instance !== undefined) {
-        if (typeof cell.instance !== 'string' || !cell.instance || cell.instance.length > 100 || !Array.isArray(cell.part) || cell.part.length !== 4 || !cell.part.every(Number.isInteger)) throw new Error('Invalid large tile placement.');
-        const [x, y, w, h] = cell.part;
-        if (w < 1 || h < 1 || w > 200 || h > 200 || x < 0 || y < 0 || x >= w || y >= h) throw new Error('Invalid large tile source cell.');
-        return { ...placement(cell.tile, cell.rotation, cell.flip), instance: cell.instance, part: [...cell.part] };
-      }
-      return placement(cell.tile, cell.rotation, cell.flip);
+      if (cell?.quarters === undefined) return validatePlacement(cell);
+      if (!Array.isArray(cell.quarters) || cell.quarters.length !== 4) throw new Error('Invalid quarter tile placement.');
+      const base = cell.tile === undefined ? null : validatePlacement(cell);
+      return cellWithQuarters(base, cell.quarters.map(tile => validatePlacement(tile, true)));
     }) };
   });
   return map;

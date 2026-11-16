@@ -100,6 +100,8 @@ h2 { font-size: 20px; color: #f0d2a1; font-weight: 400; margin: 8px 0 18px; }
 .transform-controls { display: flex; gap: 7px; }
 .transform-controls button { display: flex; align-items: center; justify-content: center; gap: 5px; flex: 1; font-size: 12px; padding: 8px 4px; }
 .transform-controls kbd { font-size: 10px; padding: 0 3px; }
+.placement-options { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.placement-options button { font-size: 12px; padding: 8px 4px; }
 .layer-list { display: flex; flex-direction: column; gap: 8px; }
 .layer-row { display: flex; align-items: center; gap: 0; padding: 3px; border: 2px solid #16121f; background: #373044; box-shadow: inset 1px 1px #675372; }
 .layer-row.active { background: #474331; border-color: #b7aa74; box-shadow: inset 2px 0 #f0d48d; }

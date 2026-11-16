@@ -1,4 +1,4 @@
-import { tilesetImports } from './model.js';
+import { tilesetImports, placedTileIds } from './model.js';
 import { baseTileSize } from './multi-tile.js';
 
 export function inferSheetGrid(tiles) {
@@ -18,7 +18,7 @@ export function inferSheetGrid(tiles) {
 export function replaceImportRegions(history, packId, importId, imageId, entries) {
   const map = history.map, pack = map.packs.find(pack => pack.id === packId && !pack.hidden), groups = pack && tilesetImports(pack), group = groups?.find(group => group.id === importId);
   if (!group || !pack.images.some(image => image.id === imageId) || !entries.length) throw new Error('No visible tile regions to save.');
-  const old = new Set(group.tiles.filter(id => pack.tiles.find(tile => tile.id === id)?.image === imageId)), used = new Set(map.layers.flatMap(layer => layer.cells.filter(Boolean).map(cell => cell.tile)));
+  const old = new Set(group.tiles.filter(id => pack.tiles.find(tile => tile.id === id)?.image === imageId)), used = placedTileIds(map);
   const tiles = entries.map((entry,i) => ({...structuredClone(entry),id:`${pack.id}:region-${crypto.randomUUID()}`,name:`${pack.name} ${String(i+1).padStart(3,'0')}`,category:'Custom',image:imageId,pixelArt:true}));
   history.snapshot(() => {
     pack.tiles = [...pack.tiles.flatMap(tile => !old.has(tile.id) ? [tile] : used.has(tile.id) ? [{...tile,hidden:true}] : []),...tiles];

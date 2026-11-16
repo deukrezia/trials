@@ -1,12 +1,21 @@
 import { selectionBounds, inBounds } from './model.js';
 import { expandInstances } from './multi-tile.js';
+import { cellPlacements, cellWithQuarters } from './quarter-cell.js';
 
 export function copySelection(map, layerIds, indices) {
   const layers = map.layers.filter(layer => layerIds.includes(layer.id) && layer.visible && !layer.locked && layer.opacity !== 0);
   const expanded = expandInstances(layers, indices), bounds = selectionBounds(map, expanded);
   if (!bounds || !layers.some(layer => expanded.some(i => layer.cells[i]))) return null;
   const ids = new Set();
-  const entries = layers.map(layer => ({ id: layer.id, name: layer.name, cells: expanded.filter(i => layer.cells[i]).map(i => { const cell = structuredClone(layer.cells[i]); ids.add(cell.tile); return { x: i % map.width - bounds.x, y: Math.floor(i / map.width) - bounds.y, cell }; }) }));
+  const entries = layers.map(layer => ({
+    id: layer.id,
+    name: layer.name,
+    cells: expanded.filter(i => layer.cells[i]).map(i => {
+      const cell = structuredClone(layer.cells[i]);
+      for (const placed of cellPlacements(cell)) ids.add(placed.tile);
+      return { x: i % map.width - bounds.x, y: Math.floor(i / map.width) - bounds.y, cell };
+    })
+  }));
   const packs = map.packs.flatMap(pack => { const tiles = pack.tiles.filter(tile => ids.has(tile.id)), sources = new Set(tiles.map(tile => tile.image)); return tiles.length ? [{ ...structuredClone(pack), tiles: structuredClone(tiles), images: structuredClone(pack.images.filter(image => sources.has(image.id))), imports: [] }] : []; });
   return { bounds, layers: entries, packs };
 }
@@ -39,10 +48,10 @@ export function pasteSelection(history, clip, x, y, selectedIds) {
     const remap = retainAssets(map,clip);
     clip.layers.forEach((entry,i) => {
       const layer = layers[i], hit = new Set(entry.cells.map(p => layer.cells[(y+p.y)*map.width+x+p.x]?.instance).filter(Boolean)), instances = new Map();
-      layer.cells.forEach((cell,index) => { if (cell?.instance && hit.has(cell.instance)) layer.cells[index] = null; });
+      layer.cells.forEach((cell,index) => { if (cell?.instance && hit.has(cell.instance)) layer.cells[index] = cellWithQuarters(null, cell.quarters); });
       for (const part of entry.cells) {
         const index = (y+part.y)*map.width+x+part.x, cell = structuredClone(part.cell);
-        cell.tile = remap.get(cell.tile) || cell.tile;
+        for (const placed of cellPlacements(cell)) placed.tile = remap.get(placed.tile) || placed.tile;
         if (cell.instance) { if (!instances.has(cell.instance)) instances.set(cell.instance,crypto.randomUUID()); cell.instance = instances.get(cell.instance); }
         layer.cells[index] = cell; selected.add(index);
       }

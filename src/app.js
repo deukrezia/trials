@@ -12,6 +12,7 @@ import { copySelection, pasteSelection, pasteTargets, canPaste } from './selecti
 import { replaceImportRegions, inferSheetGrid } from './region-edit.js';
 import { createRecoveryStore } from './recovery.js';
 import { initializeWindowChrome } from './window-chrome.js';
+import { quarterIndex } from './quarter-cell.js';
 
 initializeWindowChrome();
 
@@ -23,6 +24,7 @@ let map, history, builtinPacks = [], builtinTiles = [], selected, layerIndex = 0
 let activeCategory = 'All', activePack = 'all', grid = true, zoom = 1, pan = { x: 0, y: 0 };
 let pointer = null, pendingMapMove = null, hover = null, spaceHeld = false, dirty = false, revision = 0;
 let selection = new Set(), selectionClipboard = null, pendingPaste = null;
+let quarterPlacement = false;
 const recovery = createRecoveryStore();
 let regionEdit = null, exportEstimateGeneration = 0, exportEstimateTimer;
 let shapeType = 'rectangle', shapeOutline = false, shapePlacement = null;
@@ -197,6 +199,17 @@ function drawTile(context, tileId, x, y, pixels, turns = 0, mirrored = false, op
   context.imageSmoothingEnabled = !tile.pixelArt;
   context.drawImage(image, sx, sy, sw, sh, -pixels / 2, -pixels / 2, pixels, pixels); context.restore();
 }
+function drawCell(context, cell, x, y, pixels, opacity = 1, resolveSource) {
+  if (!cell) return;
+  function draw(placed, left, top, size) {
+    if (!placed) return;
+    const source = resolveSource?.(placed.tile);
+    drawTile(context, placed.tile, left, top, size, placed.rotation, placed.flip, opacity, placed.part, source?.tile, source?.image);
+  }
+  if (cell.tile) draw(cell, x, y, pixels);
+  const half = pixels / 2;
+  cell.quarters?.forEach((placed, slot) => draw(placed, x + (slot % 2) * half, y + Math.floor(slot / 2) * half, half));
+}
 function drawStamp(context, tileId, x, y, pixels, turns = 0, mirrored = false, opacity = 1) {
   if (!tiles.has(tileId)) return;
   for (const part of stampParts(placement(tileId, turns, mirrored), footprint(tiles.get(tileId)), 'preview')) drawTile(context, tileId, x + part.x * pixels, y + part.y * pixels, pixels, turns, mirrored, opacity, part.cell.part);
@@ -267,6 +280,14 @@ function reorderPaletteTile(packId, sourceId, targetId, after, focusId = null) {
 function updateBrush() {
   const editingSelection = tool === 'select' && selection.size > 0;
   const tile = tiles.get(selected);
+  const allowsQuarter = tool === 'eraser' || footprint(tile).every(size => size === 1);
+  const quarterButton = $('place-quarter');
+  quarterButton.disabled = !allowsQuarter;
+  quarterButton.title = allowsQuarter ? 'Snap one tile to a quarter of a cell' : 'Select a single-cell tile to use Quarter';
+  for (const [button, pressed] of [[quarterButton, quarterPlacement && allowsQuarter], [$('place-full'), !quarterPlacement || !allowsQuarter]]) {
+    button.classList.toggle('active', pressed);
+    button.setAttribute('aria-pressed', pressed);
+  }
   if (!tile && !editingSelection) { document.querySelector('.brush-section').hidden = true; requestRender(); return; }
   document.querySelector('.brush-section').hidden = tool === 'move-map' || (tool === 'select' && !editingSelection);
   document.querySelector('.selected-preview').hidden = editingSelection;
@@ -318,9 +339,16 @@ function selectLayer(id, event = {}) {
   if (previous !== [...selectedLayerIds].join('|')) selection.clear(); renderLayers(); updateBrush(); updateStats(); requestRender();
 }
 function selectionLayer(layer) { return selectedLayerIds.has(layer.id) && layer.visible && layer.opacity !== 0 && !layer.locked; }
+function pickAt(layer, point) {
+  if (!layer.visible || layer.opacity === 0) return null;
+  const cell = layer.cells[point.y * map.width + point.x];
+  const quarter = cell?.quarters?.[quarterIndex(point.qx, point.qy)];
+  if (quarter) return { tile: quarter.tile, quarter: true };
+  return cell?.tile ? { tile: cell.tile, quarter: false } : null;
+}
 function updateCursorStatus() {
   let text = '';
-  if (hover && inBounds(map, hover.x, hover.y)) { const names = [...map.layers].reverse().filter(layer => layer.visible && layer.opacity !== 0 && layer.cells[hover.y * map.width + hover.x]).map(layer => layer.name); text = `${hover.x + 1}, ${hover.y + 1}${names.length ? ` · ${names.join(', ')}` : ''}`; }
+  if (hover && inBounds(map, hover.x, hover.y)) { const names = [...map.layers].reverse().filter(layer => pickAt(layer, hover)).map(layer => layer.name); text = `${hover.x + 1}, ${hover.y + 1}${names.length ? ` · ${names.join(', ')}` : ''}`; }
   $('cursor-status').textContent = text; $('cursor-status').title = text;
 }
 function updateCursor() {
@@ -331,7 +359,7 @@ function updateCursor() {
   else if (projectOverLimit() && tool !== 'picker') cursor = 'not-allowed';
   else if (tool === 'move-map') cursor = 'grab';
   else if (tool === 'select') { if (!map.layers.some(selectionLayer)) cursor = 'not-allowed'; else if (inside && selection.has(hover.y * map.width + hover.x) && map.layers.some(item => selectionLayer(item) && item.cells[hover.y * map.width + hover.x])) cursor = 'grab'; }
-  else if (tool === 'picker') { const top = inside ? [...map.layers].reverse().find(item => item.visible && item.opacity !== 0 && item.cells[hover.y * map.width + hover.x])?.cells[hover.y * map.width + hover.x] : null; cursor = top && !tiles.get(top.tile)?.restricted ? 'copy' : 'not-allowed'; }
+  else if (tool === 'picker') { const top = inside ? [...map.layers].reverse().map(item => pickAt(item, hover)).find(Boolean) : null; cursor = top && !tiles.get(top.tile)?.restricted ? 'copy' : 'not-allowed'; }
   else if (!layer.visible || layer.opacity === 0 || layer.locked || (tool !== 'eraser' && !tiles.has(selected))) cursor = 'not-allowed';
   else if (inside && ['brush','fill'].includes(tool) && rotatedFootprint(footprint(tiles.get(selected)),rotation).some((n,i) => (i ? hover.y : hover.x) + n > (i ? map.height : map.width))) cursor = 'not-allowed';
   else if (tool === 'eraser' || tool === 'fill') cursor = 'cell';
@@ -364,7 +392,11 @@ function zoomAt(factor, x = viewport.clientWidth / 2, y = viewport.clientHeight 
 }
 function eventPoint(event) {
   const rect = canvas.getBoundingClientRect(), px = event.clientX - rect.left, py = event.clientY - rect.top;
-  return { px, py, x: Math.floor((px - pan.x) / (TILE * zoom)), y: Math.floor((py - pan.y) / (TILE * zoom)) };
+  const qx = Math.floor((px - pan.x) * 2 / (TILE * zoom)), qy = Math.floor((py - pan.y) * 2 / (TILE * zoom));
+  return { px, py, qx, qy, x: Math.floor(qx / 2), y: Math.floor(qy / 2) };
+}
+function usesQuarterPlacement() {
+  return quarterPlacement && (tool === 'eraser' || (tool === 'brush' && footprint(tiles.get(selected)).every(size => size === 1)));
 }
 function requestRender() { if (!frame) frame = requestAnimationFrame(() => { frame = 0; render(); }); }
 function drawGrid(context, width, height, pixels, stroke) {
@@ -395,9 +427,9 @@ function render() {
     ctx.save(); ctx.globalAlpha *= layer.opacity ?? 1;
     for (let y = sourceMinY; y < sourceMaxY; y++) for (let x = sourceMinX; x < sourceMaxX; x++) {
       const index = y * map.width + x, cell = layer.cells[index];
-      if (cell && !(dragging && selectionLayer(layer) && selection.has(index))) drawTile(ctx, cell.tile, (x + (movingMap ? dx : 0)) * px, (y + (movingMap ? dy : 0)) * px, px, cell.rotation, cell.flip, 1, cell.part);
+      if (!(dragging && selectionLayer(layer) && selection.has(index))) drawCell(ctx, cell, (x + (movingMap ? dx : 0)) * px, (y + (movingMap ? dy : 0)) * px, px);
     }
-    if (dragging && selectionLayer(layer)) for (const index of selection) { const cell = layer.cells[index]; if (cell) drawTile(ctx, cell.tile, (index % map.width + dx) * px, (Math.floor(index / map.width) + dy) * px, px, cell.rotation, cell.flip, .8, cell.part); }
+    if (dragging && selectionLayer(layer)) for (const index of selection) drawCell(ctx, layer.cells[index], (index % map.width + dx) * px, (Math.floor(index / map.width) + dy) * px, px, .8);
     ctx.restore();
   }
   ctx.restore();
@@ -406,9 +438,14 @@ function render() {
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, map.width * px, map.height * px); ctx.clip();
   if (pendingPaste && hover) {
     const valid = canPaste(map,pendingPaste.clip,hover.x,hover.y);
+    function resolveClipboardSource(id) {
+      for (const pack of pendingPaste.clip.packs) {
+        const tile = pack.tiles.find(item => item.id === id);
+        if (tile) return { tile, image: customImages.get(pack.images.find(image => image.id === tile.image)?.data) };
+      }
+    }
     for (const entry of pendingPaste.clip.layers) for (const part of entry.cells) {
-      const pack=pendingPaste.clip.packs.find(pack=>pack.tiles.some(tile=>tile.id===part.cell.tile)), tile=pack?.tiles.find(tile=>tile.id===part.cell.tile), image=pack?.images.find(image=>image.id===tile.image);
-      drawTile(ctx,part.cell.tile,(hover.x+part.x)*px,(hover.y+part.y)*px,px,part.cell.rotation,part.cell.flip,.55,part.cell.part,tile,image && customImages.get(image.data));
+      drawCell(ctx, part.cell, (hover.x + part.x) * px, (hover.y + part.y) * px, px, .55, resolveClipboardSource);
     }
     ctx.fillStyle = valid ? '#8bc3d420' : '#e5686850'; ctx.strokeStyle = valid ? '#a8e3ef' : '#ff8585';
     ctx.fillRect(hover.x*px,hover.y*px,pendingPaste.clip.bounds.width*px,pendingPaste.clip.bounds.height*px); ctx.strokeRect(hover.x*px,hover.y*px,pendingPaste.clip.bounds.width*px,pendingPaste.clip.bounds.height*px);
@@ -432,11 +469,15 @@ function render() {
   }
   ctx.restore();
   if (hover && inBounds(map, hover.x, hover.y) && !spaceHeld && tool !== 'select' && tool !== 'move-map' && !pendingPaste && !shapePlacement && !['shape','selection-rect'].includes(pointer?.mode)) {
-    const size = tool === 'eraser' ? [1,1] : rotatedFootprint(footprint(tiles.get(selected)), rotation), start = 0;
+    const quarter = usesQuarterPlacement(), brushPixels = quarter ? px / 2 : px;
+    const size = tool === 'eraser' ? [1, 1] : rotatedFootprint(footprint(tiles.get(selected)), rotation);
+    const left = quarter ? hover.qx * brushPixels : hover.x * px;
+    const top = quarter ? hover.qy * brushPixels : hover.y * px;
     const invalid = !map.layers[layerIndex].visible || map.layers[layerIndex].locked || map.layers[layerIndex].opacity === 0 || hover.x+size[0]>map.width || hover.y+size[1]>map.height;
-    if (['brush', 'fill'].includes(tool) && !pointer && !map.layers[layerIndex].locked && map.layers[layerIndex].visible) drawStamp(ctx, selected, hover.x * px, hover.y * px, px, rotation, flip, .48 * (map.layers[layerIndex].opacity ?? 1));
+    if (['brush', 'fill'].includes(tool) && !pointer && !invalid) drawStamp(ctx, selected, left, top, brushPixels, rotation, flip, .48 * (map.layers[layerIndex].opacity ?? 1));
     ctx.fillStyle = invalid ? '#e5686850' : tool === 'eraser' ? '#e7a49a25' : '#d6b77812'; ctx.strokeStyle = invalid ? '#ff8585' : tool === 'eraser' ? '#e7a49a' : '#e5c991';
-    ctx.fillRect((hover.x + start) * px, (hover.y + start) * px, size[0] * px, size[1] * px); ctx.strokeRect((hover.x + start) * px, (hover.y + start) * px, size[0] * px, size[1] * px);
+    ctx.fillRect(left, top, size[0] * brushPixels, size[1] * brushPixels);
+    ctx.strokeRect(left, top, size[0] * brushPixels, size[1] * brushPixels);
   }
   ctx.restore(); $('zoom-reset').textContent = `${Math.round(zoom * 100)}%`;
   updateCursorStatus(); updateCursor();
@@ -444,7 +485,8 @@ function render() {
 
 function paint(point, erase = false) {
   const value = erase ? null : placement(selected, rotation, flip);
-  if (tool === 'fill' && !erase) history.fill(point.x, point.y, value, footprint(tiles.get(selected)));
+  if (usesQuarterPlacement()) history.setQuarter(point.qx, point.qy, value);
+  else if (tool === 'fill' && !erase) history.fill(point.x, point.y, value, footprint(tiles.get(selected)));
   else history.stamp(point.x, point.y, value, footprint(tiles.get(selected)));
 }
 function finishStroke(cancel = false) {
@@ -559,8 +601,8 @@ canvas.addEventListener('pointerdown', event => {
   }
   if (tool === 'picker') {
     for (let i = map.layers.length - 1; i >= 0; i--) {
-      const cell = map.layers[i].visible && map.layers[i].opacity !== 0 && map.layers[i].cells[point.y * map.width + point.x];
-      if (cell) { if (tiles.get(cell.tile)?.restricted) { notify(FREE_UPGRADE, true); break; } selected = cell.tile; rotation = 0; flip = false; layerIndex = i; activeLayerId = map.layers[i].id; selectedLayerIds = new Set([activeLayerId]); layerAnchorId = activeLayerId; choosePack(tiles.get(selected).packId); setTool('brush'); renderLayers(); updateStats(); updateBrush(); break; }
+      const picked = pickAt(map.layers[i], point);
+      if (picked) { if (tiles.get(picked.tile)?.restricted) { notify(FREE_UPGRADE, true); break; } selected = picked.tile; quarterPlacement = picked.quarter; rotation = 0; flip = false; layerIndex = i; activeLayerId = map.layers[i].id; selectedLayerIds = new Set([activeLayerId]); layerAnchorId = activeLayerId; choosePack(tiles.get(selected).packId); setTool('brush'); renderLayers(); updateStats(); updateBrush(); break; }
     } return;
   }
   if (map.layers[layerIndex].locked || !map.layers[layerIndex].visible || map.layers[layerIndex].opacity === 0) { notify('Select an unlocked, visible layer to draw.'); return; }
@@ -576,8 +618,15 @@ canvas.addEventListener('pointermove', event => {
   if (pointer?.mode === 'pan') { pan.x = pointer.origin.x + point.px - pointer.start.px; pan.y = pointer.origin.y + point.py - pointer.start.py; }
   else if (pointer) {
     // Clamp captured input to the map to avoid unbounded line walks outside the viewport.
-    const bounded = { ...point, x: Math.max(-1, Math.min(map.width + 1, point.x)), y: Math.max(-1, Math.min(map.height + 1, point.y)) };
-    if (pointer.mode === 'paint' && !pointer.single) for (const [x, y] of line(pointer.last.x, pointer.last.y, bounded.x, bounded.y)) paint({ x, y }, pointer.erase);
+    const bounded = { ...point, x: Math.max(-1, Math.min(map.width + 1, point.x)), y: Math.max(-1, Math.min(map.height + 1, point.y)),
+      qx: Math.max(-1, Math.min(map.width * 2, point.qx)), qy: Math.max(-1, Math.min(map.height * 2, point.qy)) };
+    if (pointer.mode === 'paint' && !pointer.single) {
+      if (usesQuarterPlacement()) {
+        for (const [qx, qy] of line(pointer.last.qx, pointer.last.qy, bounded.qx, bounded.qy)) paint({ qx, qy }, pointer.erase);
+      } else {
+        for (const [x, y] of line(pointer.last.x, pointer.last.y, bounded.x, bounded.y)) paint({ x, y }, pointer.erase);
+      }
+    }
     pointer.last = bounded;
   }
   requestRender();
@@ -838,7 +887,7 @@ function renderRegion(startX, startY, width, height, pixels, options) {
   for (const layer of map.layers) if (layer.visible) {
     context.save(); context.globalAlpha *= layer.opacity ?? 1;
     for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
-    const cell = layer.cells[(startY + y) * map.width + startX + x]; if (cell) drawTile(context, cell.tile, x * pixels, y * pixels, pixels, cell.rotation, cell.flip, 1, cell.part);
+    drawCell(context, layer.cells[(startY + y) * map.width + startX + x], x * pixels, y * pixels, pixels);
     }
     context.restore();
   }
@@ -860,6 +909,14 @@ async function exportPNG() {
 }
 
 for (const button of $('tools').children) button.onclick = () => setTool(button.dataset.tool);
+function setPlacementMode(quarter) {
+  finishStroke();
+  quarterPlacement = quarter;
+  if (tool !== 'brush' && tool !== 'eraser') setTool('brush');
+  else updateBrush();
+}
+$('place-full').onclick = () => setPlacementMode(false);
+$('place-quarter').onclick = () => setPlacementMode(true);
 $('move-map').onclick = () => setTool(tool === 'move-map' ? 'select' : 'move-map');
 $('move-confirm-form').onsubmit = event => {
   event.preventDefault();
